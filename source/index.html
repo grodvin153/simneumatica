@@ -1,0 +1,5816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="keywords" content="Online Pneumatic Simulator Schematic Picuino Open-source">
+
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="description" content="Interactive pneumatic circuit simulator designed for secondary school students and teachers. Build, test, and visualize pneumatic systems online. Free, accurate, and ready for classroom use. By Picuino.">
+  <title data-i18n="title">Pneumatic Simulator - Picuino</title>
+
+  <!-- Add your own local favicon files before publishing this on a new domain. -->
+  <!-- Set the canonical URL when you decide the final public address. -->
+
+  <style>
+  :root {
+    --menu-height: 35px;
+    --toolbox-width: 98px;
+    --toolbox-border: #d6dde4;
+    --toolbox-bg: #fbfcfd;
+    --toolbox-text: #173042;
+    --toolbox-muted: #617380;
+    --toolbox-accent: #0f5d8c;
+    --toolbox-accent-soft: #dfeef8;
+  }
+
+  body {
+    margin: 0;
+    padding-top: var(--menu-height);
+    font-family: sans-serif;
+    font-size: 14px;
+    background: #f4f6f8;
+    color: #1a1a1a;
+  }
+
+  .menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: stretch;
+    background: white;
+    border-bottom: 1px solid #000;
+    z-index: 1000;
+  }
+
+  .menu-principal {
+    list-style: none;
+    margin: 0;
+    padding: 0 0;
+    display: flex;
+    flex: 1 1 auto;
+  }
+
+  .menu-item {
+    position: relative;
+  }
+
+  .menu-titulo {
+    padding: 8px 8px;
+    cursor: pointer;
+    user-select: none;
+    font-weight: bold;
+    display: flex;
+  }
+
+  .menu-quick-actions {
+    display: flex;
+    align-items: stretch;
+    margin-left: auto;
+    padding-right: 6px;
+  }
+
+  .menu-quick-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    border: 0;
+    border-left: 1px solid #d9e0e5;
+    background: transparent;
+    color: #355162;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .menu-quick-btn:hover {
+    background: #eef5f9;
+    color: var(--toolbox-accent);
+  }
+
+  .menu-quick-btn.active {
+    background: #dfeef8;
+    color: var(--toolbox-accent);
+  }
+
+  .menu-quick-btn:focus-visible {
+    outline: 2px solid var(--toolbox-accent);
+    outline-offset: -2px;
+  }
+
+  .menu-quick-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  .menu-quick-btn[data-state="stopped"] .quick-stop-shape,
+  .menu-quick-btn[data-state="running"] .quick-play-shape {
+    display: none;
+  }
+
+  /* Submenú */
+  .submenu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    position: absolute;
+    top: 100%;
+    left: 0;
+
+    width: fit-content;
+    white-space: nowrap;
+    background: white;
+    border: 1px solid #ccc;
+
+    display: none;
+  }
+
+  .submenu li {
+    position: relative;
+  }
+
+  .submenu .submenu {
+    top: 0;
+    left: 100%;
+  }
+
+  .submenu li a {
+    white-space: nowrap;
+    display: block;
+    padding: 10px;
+    text-decoration: none;
+    color: #333;
+  }
+
+  .submenu li a:hover {
+    background: #f0f0f0;
+  }
+
+  .submenu li.has-submenu > a {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    position: relative;
+  }
+
+  .has-submenu > a::after {
+    content: ">";
+    margin-left: auto;
+    padding-left: 8px;
+  }
+
+  .submenu.active {
+    display: block;
+  }
+
+  .workspace {
+    display: flex;
+    min-height: calc(100vh - var(--menu-height));
+  }
+
+  .toolbox {
+    width: var(--toolbox-width);
+    flex: 0 0 var(--toolbox-width);
+    position: sticky;
+    top: var(--menu-height);
+    align-self: flex-start;
+    height: calc(100vh - var(--menu-height));
+    overflow-y: auto;
+    border-right: 1px solid var(--toolbox-border);
+    background: linear-gradient(180deg, #ffffff 0%, var(--toolbox-bg) 100%);
+    box-shadow: inset -1px 0 0 #edf1f4;
+  }
+
+  .toolbox-content {
+    padding: 8px 6px 14px;
+  }
+
+  .toolbox-heading {
+    margin: 0 0 10px;
+    color: var(--toolbox-muted);
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .toolbox-section + .toolbox-section {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #e4e9ee;
+  }
+
+  .toolbox-section-title {
+    margin: 0 0 8px;
+    color: var(--toolbox-muted);
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .toolbox-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .tool-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    padding: 7px 4px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--toolbox-text);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+
+  .tool-btn:hover {
+    background: #f1f6fa;
+    border-color: #b6c8d5;
+    transform: translateY(-1px);
+  }
+
+  .tool-btn:focus-visible {
+    outline: 2px solid var(--toolbox-accent);
+    outline-offset: 2px;
+  }
+
+  .tool-btn.active {
+    background: var(--toolbox-accent-soft);
+    border-color: var(--toolbox-accent);
+    color: var(--toolbox-accent);
+  }
+
+  .tool-icon {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 36px;
+    height: 36px;
+  }
+
+  .tool-icon svg {
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    overflow: visible;
+  }
+
+  .tool-icon svg text {
+    fill: currentColor;
+    stroke: none;
+    font-family: sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+  .tool-label {
+    display: block;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.15;
+  }
+
+  .canvas-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: calc(100vh - var(--menu-height));
+  }
+
+  .canvas {
+    display: block;
+    background: #f8f8f8;
+  }
+
+  .toolbox-sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  dialog {
+    margin-top: 40px;
+    margin-bottom: auto;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 640px;
+
+    position: fixed;
+    top: 0;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  }
+
+  .save-file-dialog {
+    border: 1px solid #cfd8df;
+    border-radius: 14px;
+    padding: 0;
+    width: min(420px, calc(100vw - 32px));
+    box-shadow: 0 20px 48px rgba(23, 48, 66, 0.22);
+  }
+
+  .save-file-dialog::backdrop {
+    background: rgba(12, 26, 36, 0.28);
+  }
+
+  .save-file-dialog-content {
+    padding: 18px;
+  }
+
+  .save-file-dialog-content h3 {
+    margin: 0 0 14px;
+    font-size: 18px;
+    color: #173042;
+  }
+
+  .save-file-dialog-content label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #325064;
+  }
+
+  .save-file-dialog-content input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid #b8c7d3;
+    border-radius: 10px;
+    font: inherit;
+  }
+
+  .save-file-dialog-content input:focus-visible {
+    outline: 2px solid var(--toolbox-accent);
+    outline-offset: 1px;
+    border-color: var(--toolbox-accent);
+  }
+
+  .save-file-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .save-file-dialog-actions button {
+    padding: 9px 14px;
+    border: 1px solid #b8c7d3;
+    border-radius: 10px;
+    background: #fff;
+    color: #173042;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .save-file-dialog-actions button[data-variant="primary"] {
+    background: var(--toolbox-accent);
+    border-color: var(--toolbox-accent);
+    color: #fff;
+  }
+
+  .component-menu-actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .component-menu-actions button {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #c8d3dc;
+    border-radius: 10px;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .component-menu-actions button:hover {
+    background: #f5f8fb;
+  }
+
+  .component-menu-actions button[data-variant="danger"] {
+    border-color: #d9a2a2;
+    color: #8d1f1f;
+    background: #fff8f8;
+  }
+
+  .component-menu-actions button[data-variant="danger"]:hover {
+    background: #ffecec;
+  }
+
+  ul {
+    padding-left: 15px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    padding: 4px;
+    vertical-align: top;
+    border: 1px solid #000;
+  }
+
+  @media (max-width: 960px) {
+    .menu-quick-btn {
+      width: 34px;
+    }
+
+    .workspace {
+      flex-direction: column;
+    }
+
+    .toolbox {
+      width: auto;
+      flex: 0 0 auto;
+      position: static;
+      height: auto;
+      border-right: 0;
+      border-bottom: 1px solid var(--toolbox-border);
+    }
+
+    .toolbox-content {
+      padding: 10px;
+    }
+
+    .toolbox-grid {
+      grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+    }
+
+    .canvas-wrap {
+      min-height: 420px;
+    }
+  }
+
+  </style>
+</head>
+
+<body onbeforeunload="return closeConfirm()">
+
+  <nav class="menu">
+    <ul class="menu-principal">
+
+      <li class="menu-item">
+        <div class="menu-titulo" data-i18n="fileMenu">File</div>
+        <ul class="submenu">
+
+          <li><a href="#" data-action="fSwap"   data-i18n="fSwap">Swap Screen</a></li>
+
+          <li class="has-submenu">
+            <a href="#" data-i18n="languageMenu">Language</a>
+            <ul class="submenu">
+              <li><a href="#" data-action="enLang" data-i18n="enLang">English</a></li>
+              <li><a href="#" data-action="esLang" data-i18n="esLang">Spanish</a></li>
+            </ul>
+          </li>
+
+          <li><a href="#" data-action="fNew"   data-i18n="fNew">New Schematic</a></li>
+          <li><a href="#" data-action="fOpen"  data-i18n="fOpen">Open Schematic</a></li>
+
+          <li class="has-submenu">
+            <a href="#" data-i18n="fSave">Save Schematic</a>
+            <ul class="submenu">
+              <li><a href="#" data-action="fSaveStudent" data-i18n="fSaveStudent">Student</a></li>
+              <li><a href="#" data-action="fSaveTeacher" data-i18n="fSaveTeacher">Teacher</a></li>
+            </ul>
+          </li>
+
+          <li><a href="#" data-action="fSavePNG" data-i18n="fSavePNG">Save Image</a></li>
+          <li><a href="#" data-action="fCompare" data-i18n="fCompare">Compare Files</a></li>
+
+          <li><a href="#" data-action="fAbout" data-i18n="fAbout">About...</a></li>
+        </ul>
+      </li>
+
+      <li class="menu-item">
+        <div class="menu-titulo" data-i18n="drawMenu">Draw</div>
+        <ul class="submenu">
+
+          <li class="has-submenu">
+            <a href="#" data-i18n="valvesMenu">Valves</a>
+            <ul class="submenu">
+              <li><a href="#" data-action="cValve22m" data-i18n="cValve22m">Valve 2/2 manual</a></li>
+              <li><a href="#" data-action="cValve32b" data-i18n="cValve32b">Valve 3/2 button</a></li>
+              <li><a href="#" data-action="cValve32m" data-i18n="cValve32m">Valve 3/2 manual</a></li>
+              <li><a href="#" data-action="cValve32r" data-i18n="cValve32r">Valve 3/2 with roller</a></li>
+              <li><a href="#" data-action="cRoller"   data-i18n="cRoller">Roller of valve</a></li>
+              <li><a href="#" data-action="cValve32p" data-i18n="cValve32p">Valve 3/2 pneu. pilot</a></li>
+              <li><a href="#" data-action="cValve42m" data-i18n="cValve42m">Valve 4/2 manual</a></li>
+              <li><a href="#" data-action="cValve52m" data-i18n="cValve52m">Valve 5/2 manual</a></li>
+              <li><a href="#" data-action="cValve52p" data-i18n="cValve52p">Valve 5/2 pneu. pilot</a></li>
+            </ul>
+          </li>
+
+          <li class="has-submenu">
+            <a href="#" data-i18n="auxValvesMenu">Aux. valves</a>
+            <ul class="submenu">
+              <li><a href="#" data-action="cValveNret" data-i18n="cValveNret">Non-return valve</a></li>
+              <li><a href="#" data-action="cValveFlow" data-i18n="cValveFlow">Choke valve</a></li>
+              <li><a href="#" data-action="cValveOr"   data-i18n="cValveOr">Or valve</a></li>
+              <li><a href="#" data-action="cValveAnd"  data-i18n="cValveAnd">And valve</a></li>
+            </ul>
+          </li>
+
+          <li class="has-submenu">
+            <a href="#" data-i18n="cylinderMenu">Cylinder</a>
+            <ul class="submenu">
+              <li><a href="#" data-action="cCylinder1" data-i18n="cCylinder1">Single-acting</a></li>
+              <li><a href="#" data-action="cCylinder2" data-i18n="cCylinder2">Double-acting</a></li>
+            </ul>
+          </li>
+
+          <li><a href="#" data-action="cPipe"   data-i18n="cPipe">Pipe</a></li>
+          <li><a href="#" data-action="cPress"  data-i18n="cPress">Compressor</a></li>
+          <li><a href="#" data-action="cEscape" data-i18n="cEscape">Escape</a></li>
+          <li><a href="#" data-action="cText"   data-i18n="cText">Text</a></li>
+          <li><a href="#" data-action="cManometer"  data-i18n="cManometer">Manometer</a></li>
+
+        </ul>
+      </li>
+
+      <li class="menu-item">
+        <div class="menu-titulo" data-i18n="examplesMenu">Examples</div>
+        <ul class="submenu">
+
+          <li class="has-submenu">
+            <a href="#" data-i18n="singleMenu">Single</a>
+            <ul class="submenu">
+              <li><a href="./index.html?loadFile=single-22.txt" data-example-file="single-22.txt" data-i18n="eSingle01">Valve 2/2</a></li>
+              <li><a href="./index.html?loadFile=single-32.txt" data-example-file="single-32.txt" data-i18n="eSingle02">Valve 3/2</a></li>
+              <li><a href="./index.html?loadFile=single-32-auto.txt" data-example-file="single-32-auto.txt" data-i18n="eSingle03">Valve 3/2 auto</a></li>
+              <li><a href="./index.html?loadFile=single-32-and.txt" data-example-file="single-32-and.txt" data-i18n="eSingle04">Valve AND</a></li>
+              <li><a href="./index.html?loadFile=single-32-or.txt" data-example-file="single-32-or.txt" data-i18n="eSingle05">Valve OR</a></li>
+              <li><a href="./index.html?loadFile=single-32-x2.txt" data-example-file="single-32-x2.txt" data-i18n="eSingle06">Valve 3/2 x2</a></li>
+            </ul>
+          </li>
+
+          <li class="has-submenu">
+            <a href="#" data-i18n="doubleMenu">Double</a>
+            <ul class="submenu">
+              <li><a href="./index.html?loadFile=double-32-manual.txt" data-example-file="double-32-manual.txt" data-i18n="eDouble01">Valve 3/2 manual</a></li>
+              <li><a href="./index.html?loadFile=double-52-manual.txt" data-example-file="double-52-manual.txt" data-i18n="eDouble02">Valve 5/2 manual</a></li>
+              <li><a href="./index.html?loadFile=double-52-piloted.txt" data-example-file="double-52-piloted.txt" data-i18n="eDouble03">Valve 5/2 pneu.</a></li>
+              <li><a href="./index.html?loadFile=double-52-auto.txt" data-example-file="double-52-auto.txt" data-i18n="eDouble04">Valve 5/2 + Roller + Flow</a></li>
+            </ul>
+          </li>
+
+          <li class="has-submenu">
+            <a href="#" data-i18n="multipleMenu">Multiple</a>
+            <ul class="submenu">
+              <li><a href="./index.html?loadFile=multi-abab.txt" data-example-file="multi-abab.txt" data-i18n="eMulti01">A+ B+ A- B-</a></li>
+              <li><a href="./index.html?loadFile=multi-abba.txt" data-example-file="multi-abba.txt" data-i18n="eMulti02">A+ B+ B- A-</a></li>
+            </ul>
+          </li>
+
+        </ul>
+      </li>
+
+      <li class="menu-item">
+        <div class="menu-titulo" data-i18n="editMenu">Edit</div>
+        <ul class="submenu">
+          <li><a href="#" data-action="eDelete" data-i18n="eDelete">Delete</a></li>
+          <li><a href="#" data-action="eMove"   data-i18n="eMove">Move</a></li>
+          <li><a href="#" data-action="eOptions" data-i18n="eOptions">Options</a></li>
+          <li><a href="#" data-action="eFlip" data-i18n="eFlip">Flip</a></li>
+        </ul>
+      </li>
+
+      <li class="menu-item">
+        <div class="menu-titulo" data-i18n="simulateMenu">Simulate</div>
+        <ul class="submenu">
+          <li><a href="#" data-action="sInit"     data-i18n="sInit">Init</a></li>
+          <li><a href="#" data-action="sStep"     data-i18n="sStep">Step 's'</a></li>
+          <li><a href="#" data-action="sStop"     data-i18n="sStop">Stop</a></li>
+          <li><a href="#" data-action="sContinue" data-i18n="sContinue">Continue</a></li>
+          <li><a href="#" data-action="sReset" data-i18n="sReset">Reset</a></li>
+        </ul>
+      </li>
+
+    </ul>
+
+    <div class="menu-quick-actions">
+      <button
+        type="button"
+        id="quickSimBtn"
+        class="menu-quick-btn"
+        data-action="sToggle"
+        data-state="stopped"
+        aria-label="Start simulation"
+        title="Start simulation">
+        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+          <polygon class="quick-play-shape" points="6,4 16,10 6,16"></polygon>
+          <rect class="quick-stop-shape" x="5" y="5" width="10" height="10" rx="1"></rect>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <svg class="toolbox-sprite" aria-hidden="true" focusable="false">
+    <symbol id="icon-pipe" viewBox="0 0 48 48">
+      <circle cx="10" cy="12" r="2.5"></circle>
+      <circle cx="38" cy="36" r="2.5"></circle>
+      <path d="M10 12H22V24H38V36"></path>
+    </symbol>
+    <symbol id="icon-compressor" viewBox="0 0 48 48">
+      <path d="M8 30h20"></path>
+      <rect x="12" y="19" width="16" height="11" rx="2"></rect>
+      <path d="M14 19v-4h12v4"></path>
+      <path d="M28 24h4"></path>
+      <circle cx="36" cy="24" r="6"></circle>
+      <path d="M36 24l3-2"></path>
+    </symbol>
+    <symbol id="icon-escape" viewBox="0 0 48 48">
+      <path d="M24 10v16"></path>
+      <path d="M18 26h12"></path>
+      <path d="M14 34h20"></path>
+      <path d="M18 28l-4 6"></path>
+      <path d="M24 28v7"></path>
+      <path d="M30 28l4 6"></path>
+    </symbol>
+    <symbol id="icon-text" viewBox="0 0 48 48">
+      <path d="M12 14h24"></path>
+      <path d="M24 14v20"></path>
+      <path d="M17 34h14"></path>
+    </symbol>
+    <symbol id="icon-manometer" viewBox="0 0 48 48">
+      <circle cx="24" cy="22" r="11"></circle>
+      <path d="M24 22l6-4"></path>
+      <path d="M18 35h12"></path>
+      <path d="M22 35v4"></path>
+      <path d="M26 35v4"></path>
+    </symbol>
+    <symbol id="icon-cylinder1" viewBox="0 0 48 48">
+      <rect x="10" y="16" width="20" height="16"></rect>
+      <path d="M20 16v16"></path>
+      <path d="M30 24h10"></path>
+      <path d="M10 24H6"></path>
+      <path d="M6 24v6"></path>
+    </symbol>
+    <symbol id="icon-cylinder2" viewBox="0 0 48 48">
+      <rect x="10" y="16" width="20" height="16"></rect>
+      <path d="M20 16v16"></path>
+      <path d="M30 24h10"></path>
+      <path d="M10 20H6"></path>
+      <path d="M10 28H6"></path>
+    </symbol>
+    <symbol id="icon-valve22m" viewBox="0 0 48 48">
+      <rect x="10" y="16" width="12" height="16"></rect>
+      <rect x="22" y="16" width="12" height="16"></rect>
+      <path d="M6 24h4"></path>
+      <path d="M34 24h8"></path>
+      <path d="M16 13l4-5"></path>
+      <path d="M14 24h5"></path>
+      <path d="M25 24h5"></path>
+    </symbol>
+    <symbol id="icon-valve32b" viewBox="0 0 48 48">
+      <rect x="10" y="16" width="12" height="16"></rect>
+      <rect x="22" y="16" width="12" height="16"></rect>
+      <path d="M6 24h4"></path>
+      <path d="M34 20h8"></path>
+      <path d="M28 32v6"></path>
+      <path d="M12 12h8"></path>
+      <path d="M14 24h5"></path>
+      <path d="M25 24h5"></path>
+    </symbol>
+    <symbol id="icon-valve32m" viewBox="0 0 48 48">
+      <rect x="10" y="16" width="12" height="16"></rect>
+      <rect x="22" y="16" width="12" height="16"></rect>
+      <path d="M6 24h4"></path>
+      <path d="M34 20h8"></path>
+      <path d="M28 32v6"></path>
+      <path d="M16 13l-4-5"></path>
+      <path d="M14 24h5"></path>
+      <path d="M25 24h5"></path>
+    </symbol>
+    <symbol id="icon-valve32r" viewBox="0 0 48 48">
+      <rect x="10" y="16" width="12" height="16"></rect>
+      <rect x="22" y="16" width="12" height="16"></rect>
+      <path d="M6 24h4"></path>
+      <path d="M34 20h8"></path>
+      <path d="M28 32v6"></path>
+      <path d="M16 13l-2-4"></path>
+      <circle cx="10" cy="7" r="3"></circle>
+      <path d="M14 24h5"></path>
+      <path d="M25 24h5"></path>
+    </symbol>
+    <symbol id="icon-roller" viewBox="0 0 48 48">
+      <circle cx="24" cy="13" r="7"></circle>
+      <path d="M24 20v12"></path>
+      <path d="M14 34h20"></path>
+    </symbol>
+    <symbol id="icon-valve32p" viewBox="0 0 48 48">
+      <rect x="10" y="16" width="12" height="16"></rect>
+      <rect x="22" y="16" width="12" height="16"></rect>
+      <path d="M6 24h4"></path>
+      <path d="M34 20h4"></path>
+      <path d="M28 32v6"></path>
+      <polygon points="42,20 36,16 36,24" fill="currentColor"></polygon>
+      <path d="M14 24h5"></path>
+      <path d="M25 24h5"></path>
+    </symbol>
+    <symbol id="icon-valve42m" viewBox="0 0 48 48">
+      <rect x="10" y="16" width="12" height="16"></rect>
+      <rect x="22" y="16" width="12" height="16"></rect>
+      <path d="M16 13l-4-5"></path>
+      <path d="M14 16v-5"></path>
+      <path d="M14 32v5"></path>
+      <path d="M30 16v-5"></path>
+      <path d="M30 32v5"></path>
+      <path d="M14 24h5"></path>
+      <path d="M25 24h5"></path>
+    </symbol>
+    <symbol id="icon-valve52m" viewBox="0 0 48 48">
+      <rect x="10" y="16" width="12" height="16"></rect>
+      <rect x="22" y="16" width="12" height="16"></rect>
+      <path d="M16 13l-4-5"></path>
+      <path d="M14 16v-5"></path>
+      <path d="M14 32v5"></path>
+      <path d="M24 32v5"></path>
+      <path d="M30 16v-5"></path>
+      <path d="M30 32v5"></path>
+      <path d="M14 24h5"></path>
+      <path d="M25 24h5"></path>
+    </symbol>
+    <symbol id="icon-valve52p" viewBox="0 0 48 48">
+      <rect x="10" y="16" width="12" height="16"></rect>
+      <rect x="22" y="16" width="12" height="16"></rect>
+      <path d="M14 16v-5"></path>
+      <path d="M14 32v5"></path>
+      <path d="M24 32v5"></path>
+      <path d="M30 16v-5"></path>
+      <path d="M30 32v5"></path>
+      <path d="M34 20h4"></path>
+      <polygon points="42,20 36,16 36,24" fill="currentColor"></polygon>
+      <path d="M14 24h5"></path>
+      <path d="M25 24h5"></path>
+    </symbol>
+    <symbol id="icon-valvenret" viewBox="0 0 48 48">
+      <path d="M8 24h32"></path>
+      <polygon points="18,18 18,30 28,24" fill="currentColor"></polygon>
+      <path d="M31 17v14"></path>
+    </symbol>
+    <symbol id="icon-valveflow" viewBox="0 0 48 48">
+      <path d="M8 24h32"></path>
+      <path d="M20 16v16"></path>
+      <path d="M28 16v16"></path>
+      <path d="M16 29l16-10"></path>
+      <path d="M27 18h5v5"></path>
+    </symbol>
+    <symbol id="icon-valveor" viewBox="0 0 48 48">
+      <circle cx="10" cy="16" r="2"></circle>
+      <circle cx="10" cy="32" r="2"></circle>
+      <circle cx="38" cy="24" r="2"></circle>
+      <path d="M12 16l10 8"></path>
+      <path d="M12 32l10-8"></path>
+      <path d="M22 24h14"></path>
+    </symbol>
+    <symbol id="icon-valveand" viewBox="0 0 48 48">
+      <path d="M8 16h10"></path>
+      <path d="M8 32h10"></path>
+      <rect x="18" y="12" width="12" height="24" rx="2"></rect>
+      <path d="M30 24h10"></path>
+    </symbol>
+  </svg>
+
+  <div class="workspace">
+    <aside class="toolbox" aria-label="Draw tools">
+      <div class="toolbox-content">
+        <p class="toolbox-heading" data-i18n="drawMenu">Draw</p>
+
+        <section class="toolbox-section">
+          <div class="toolbox-grid">
+            <button type="button" class="tool-btn" data-action="cPipe" data-component-type="Pipe" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-pipe"></use></svg></span>
+              <span class="tool-label" data-i18n="cPipe">Pipe</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cPress" data-component-type="Compressor" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-compressor"></use></svg></span>
+              <span class="tool-label" data-i18n="cPress">Compressor</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cEscape" data-component-type="Escape" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-escape"></use></svg></span>
+              <span class="tool-label" data-i18n="cEscape">Escape</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cText" data-component-type="Text" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-text"></use></svg></span>
+              <span class="tool-label" data-i18n="cText">Text</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cManometer" data-component-type="Manometer" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-manometer"></use></svg></span>
+              <span class="tool-label" data-i18n="cManometer">Manometer</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="toolbox-section">
+          <p class="toolbox-section-title" data-i18n="valvesMenu">Valves</p>
+          <div class="toolbox-grid">
+            <button type="button" class="tool-btn" data-action="cValve22m" data-component-type="Valve22m" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valve22m"></use></svg></span>
+              <span class="tool-label" data-i18n="cValve22m">Valve 2/2 manual</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cValve32b" data-component-type="Valve32b" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valve32b"></use></svg></span>
+              <span class="tool-label" data-i18n="cValve32b">Valve 3/2 button</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cValve32m" data-component-type="Valve32m" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valve32m"></use></svg></span>
+              <span class="tool-label" data-i18n="cValve32m">Valve 3/2 manual</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cValve32r" data-component-type="Valve32r" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valve32r"></use></svg></span>
+              <span class="tool-label" data-i18n="cValve32r">Valve 3/2 with roller</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cRoller" data-component-type="Roller" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-roller"></use></svg></span>
+              <span class="tool-label" data-i18n="cRoller">Roller of valve</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cValve32p" data-component-type="Valve32p" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valve32p"></use></svg></span>
+              <span class="tool-label" data-i18n="cValve32p">Valve 3/2 pneu. pilot</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cValve42m" data-component-type="Valve42m" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valve42m"></use></svg></span>
+              <span class="tool-label" data-i18n="cValve42m">Valve 4/2 manual</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cValve52m" data-component-type="Valve52m" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valve52m"></use></svg></span>
+              <span class="tool-label" data-i18n="cValve52m">Valve 5/2 manual</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cValve52p" data-component-type="Valve52p" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valve52p"></use></svg></span>
+              <span class="tool-label" data-i18n="cValve52p">Valve 5/2 pneu. pilot</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="toolbox-section">
+          <p class="toolbox-section-title" data-i18n="auxValvesMenu">Aux. valves</p>
+          <div class="toolbox-grid">
+            <button type="button" class="tool-btn" data-action="cValveNret" data-component-type="ValveNret" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valvenret"></use></svg></span>
+              <span class="tool-label" data-i18n="cValveNret">Non-return valve</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cValveFlow" data-component-type="ValveFlow" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valveflow"></use></svg></span>
+              <span class="tool-label" data-i18n="cValveFlow">Choke valve</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cValveOr" data-component-type="ValveOr" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valveor"></use></svg></span>
+              <span class="tool-label" data-i18n="cValveOr">Or valve</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cValveAnd" data-component-type="ValveAnd" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valveand"></use></svg></span>
+              <span class="tool-label" data-i18n="cValveAnd">And valve</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="toolbox-section">
+          <p class="toolbox-section-title" data-i18n="cylinderMenu">Cylinder</p>
+          <div class="toolbox-grid">
+            <button type="button" class="tool-btn" data-action="cCylinder1" data-component-type="Cylinder1" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-cylinder1"></use></svg></span>
+              <span class="tool-label" data-i18n="cCylinder1">Single-acting</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cCylinder2" data-component-type="Cylinder2" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-cylinder2"></use></svg></span>
+              <span class="tool-label" data-i18n="cCylinder2">Double-acting</span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <div class="canvas-wrap">
+      <canvas id="canvas" class="canvas"></canvas>
+    </div>
+  </div>
+
+  <dialog id="textPrompt">
+    <form method="dialog">
+      <p id="messageInput">Text:</p>
+      <input type="text" name="answer" id="textInput" placeholder="Text...">
+      <div style="margin-top: 16px;">
+        <button id="confirmBtn" value="default">Accept</button>
+        <button id="cancelBtn" value="cancel" formnovalidate>Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="componentMenu">
+    <h3 id="componentMenuTitle" data-i18n="componentMenuTitle">Element Actions</h3>
+    <div class="component-menu-actions">
+      <button type="button" id="componentMenuEditBtn" data-i18n="eOptions">Options</button>
+      <button type="button" id="componentMenuFlipBtn" data-i18n="eFlip">Flip</button>
+      <button type="button" id="componentMenuDeleteBtn" data-i18n="eDelete" data-variant="danger">Delete</button>
+      <button type="button" id="componentMenuCloseBtn" data-i18n="componentMenuCloseBtn">Close</button>
+    </div>
+  </dialog>
+
+
+  <dialog id="compareWindow">
+    <h1 data-i18n="compareWindowTitle">Pneumatic Schematic Comparison Tool</h1>
+    <input type="file" id="compareFileInput" multiple>
+    <div id="compareResults"></div>
+    <div style="margin-top: 16px;">
+       <button onclick="compareWindowReport()" id="compareBtn" data-i18n="compareBtn">Compare Schematics</button>
+       <button onclick="compareWindowClose()" id="compareCloseBtn" data-i18n="compareCloseBtn">Close Window</button>
+    </div>
+  </dialog>
+
+
+  <dialog id="aboutWindow">
+    <div>
+    <h2>Simulador Neumático Derivado de Picuino</h2>
+    <p><strong>Versión modificada y adaptada por Gonzalo Rodríguez Vinuesa.</strong></p>
+    <p><strong>Contacto:</strong> <a href="mailto:gonzalorv@gmail.com">gonzalorv@gmail.com</a></p>
+    <p><strong>Autor de la obra original:</strong> Carlos Félix Pardo Martín.</p>
+    <p><strong>Proyecto original:</strong>
+      <a href="https://www.picuino.com/neumatic/index.html" target="_blank" rel="noopener noreferrer">Picuino Pneumatic Simulator</a>.
+    </p>
+    <p><strong>Código fuente original:</strong>
+      <a href="https://github.com/picuino/neumatic/" target="_blank" rel="noopener noreferrer">github.com/picuino/neumatic</a>.
+    </p>
+    <p><strong>Tutoriales originales:</strong>
+      <a href="https://www.picuino.com/en/mecan-neumatic-index.html" target="_blank" rel="noopener noreferrer">Pneumatics tutorial (en)</a>.
+      <a href="https://www.picuino.com/es/mecan-neumatic-index.html" target="_blank" rel="noopener noreferrer">Tutorial de neumática (es)</a>.
+    </p>
+    <p>
+    Esta aplicación es una obra derivada del proyecto original y se distribuye
+    bajo los términos de la licencia GNU GPL v3 o posterior. Se mantiene la
+    atribución al autor original y esta versión incorpora modificaciones de
+    interfaz, edición y experiencia de uso realizadas por Gonzalo Rodríguez Vinuesa.</p>
+    <p>
+    Copyright © 2025 Carlos Félix Pardo Martín sobre la obra original.
+    Copyright © 2026 Gonzalo Rodríguez Vinuesa sobre las modificaciones de esta versión.</p>
+    <p>
+    Este programa se distribuye con la esperanza de que sea útil, pero SIN
+    NINGUNA GARANTÍA; incluso sin la garantía implícita de COMERCIABILIDAD o
+    IDONEIDAD PARA UN PROPÓSITO PARTICULAR. Consulta la licencia para más detalles.</p>
+    <p>
+    Licencia:
+    <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">
+    GNU GPL v3</a>.</p>
+    <button id="aboutCloseBtn" data-i18n="aboutCloseBtn">Close Window</button>
+    </div>
+  </dialog>
+
+  <dialog id="saveFileDialog" class="save-file-dialog">
+    <div class="save-file-dialog-content">
+      <h3 id="saveFileDialogTitle" data-i18n="saveFileDialogTitle">Save file</h3>
+      <label for="saveFileNameInput" data-i18n="saveFileNameLabel">File name</label>
+      <input type="text" id="saveFileNameInput" autocomplete="off" spellcheck="false">
+      <div class="save-file-dialog-actions">
+        <button type="button" id="saveFileCancelBtn" data-i18n="saveFileCancelBtn">Cancel</button>
+        <button type="button" id="saveFileConfirmBtn" data-i18n="saveFileConfirmBtn" data-variant="primary">Save</button>
+      </div>
+    </div>
+  </dialog>
+
+<script src="./embedded-examples.js"></script>
+<script>
+
+/*
+   Picuino Pneumatic Simulator.
+
+   Copyright © 2025 Carlos Félix Pardo Martín.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program. If not, see <https://www.gnu.org/licenses/>.
+*/
+
+/* Global constants and variables */
+const programVersion = '2.8';
+const canvas = document.getElementById('canvas');
+const toolButtons = document.querySelectorAll('.tool-btn');
+const grid = 10;
+const lineWidth = 2;
+const nearDist = 5;
+const selectedColor = '#e06000';
+const defaultColor = '#000000';
+const textFont = '14px sans-serif';
+const canvasScale = 2;
+const minCanvasWidth = 320 * canvasScale;
+const minCanvasHeight = 320 * canvasScale;
+const airPressure = 1; // bar absolute
+const compressorPressure = 6; // bar relative
+const conductanceBase = 2000;
+const minTimestamp = parseInt('1900000000', 16);
+
+
+let drawMode = null;
+let componentType = null;
+let componentMove = null;
+let componentEdit = null;
+let editPipe = null;
+let pipeMove = null;
+let initPos = null;
+let endPos = null;
+let running = false;
+let globalLang = null;
+let mousePosition = null;
+let stepTime = null;
+let simulationActive = false;
+let activateValvesTouchingBody = true;
+let renderTime = 0;
+let previewComponent = null;
+let simulationAudio = null;
+let simulationAudioState = new WeakMap();
+
+
+/*************************************************************************/
+
+const translations = {
+
+  en: {
+    title: 'Pneumatic Simulator - Picuino',
+    closeConfirm: "Are you sure you want to leave this page?",
+    aboutCloseBtn: 'Close Window',
+    saveFileDialogTitle: 'Save file',
+    saveImageDialogTitle: 'Save image',
+    saveFileNameLabel: 'File name',
+    saveFileCancelBtn: 'Cancel',
+    saveFileConfirmBtn: 'Save',
+    compareCloseBtn: 'Close Window',
+    compareWindowTitle: 'Pneumatic Schematic Comparison Tool',
+    compareBtn: 'Compare Files',
+    fileMenu: 'File',
+    fSwap: 'Swap Screen',
+    fNew: 'New Schematic',
+    fOpen: 'Open Schematic',
+    fSave: 'Save Schematic',
+    fSaveStudent: 'Student',
+    fSaveTeacher: 'Teacher',
+    fSavePNG: 'Save Image',
+    fCompare: 'Compare Files',
+    fAbout: 'About...',
+    examplesMenu: 'Examples',
+    singleMenu: 'Single',
+    doubleMenu: 'Double',
+    multipleMenu: 'Multiple',
+    drawMenu: 'Draw',
+    valvesMenu: 'Valves',
+    cValve22m: 'Valve 2/2 manual',
+    cValve32b: 'Valve 3/2 button',
+    cValve32m: 'Valve 3/2 manual',
+    cValve32r: 'Valve 3/2 with roller',
+    cValve32p: 'Valve 3/2 pneu. pilot',
+    cRoller: 'Roller of valve',
+    cValve42m: 'Valve 4/2 manual',
+    cValve52m: 'Valve 5/2 manual',
+    cValve52p: 'Valve 5/2 pneu. pilot',
+    auxValvesMenu: 'Aux. valves',
+    cValveNret: 'Non-return valve',
+    cValveFlow: 'Choke valve',
+    cValveOr: 'OR valve',
+    cValveAnd: 'AND valve',
+    cylinderMenu: 'Cylinders',
+    cCylinder1: 'Single-acting',
+    cCylinder2: 'Double-acting',
+    cPress: 'Compressor',
+    cManometer: 'Manometer',
+    cPipe: 'Pipe',
+    cEscape: 'Escape',
+    cText: 'Text',
+    editMenu: 'Edit',
+    eDelete: 'Delete',
+    eMove: 'Move',
+    eOptions: 'Options',
+    eFlip: 'Flip',
+    componentMenuTitle: 'Element Actions',
+    componentMenuCloseBtn: 'Close',
+    statusReady: 'Ready: drag elements, double-click for actions, or choose a tool to insert.',
+    statusDragging: 'Dragging element: release the mouse to drop it.',
+    statusInsert: 'Insert {component}: click on the canvas to place it.',
+    statusPipeStart: 'Insert pipe: click the starting point.',
+    statusPipeEnd: 'Insert pipe: click the ending point.',
+    statusDelete: 'Delete mode: click a component to remove it.',
+    statusMove: 'Move mode: click a component to pick it and click again to drop it.',
+    statusOptions: 'Options mode: click a component to edit it.',
+    statusFlip: 'Flip mode: click a component to flip it.',
+    statusSimulation: 'Simulation running: stop it before editing the schematic.',
+    quickSimPlay: 'Start simulation',
+    quickSimStop: 'Stop simulation',
+    simulateMenu: 'Simulate',
+    sInit: 'Init',
+    sStep: "Step 's'",
+    sStop: 'Stop',
+    sContinue: 'Continue',
+    sReset: 'Reset',
+  },
+
+  es: {
+    title: 'Simulador Neumático - Picuino',
+    closeConfirm: "¿Realmente desea salir de la página web?",
+    aboutCloseBtn: 'Cerrar Ventana',
+    saveFileDialogTitle: 'Guardar archivo',
+    saveImageDialogTitle: 'Guardar imagen',
+    saveFileNameLabel: 'Nombre del archivo',
+    saveFileCancelBtn: 'Cancelar',
+    saveFileConfirmBtn: 'Guardar',
+    compareCloseBtn: 'Cerrar Ventana',
+    compareWindowTitle: 'Comparador de Esquemas Neumáticos',
+    compareBtn: 'Comparar Archivos',
+    fileMenu: 'Archivo',
+    fSwap: 'Cambiar pantalla',
+    fNew: 'Nuevo Esquema',
+    fOpen: 'Abrir Esquema',
+    fSave: 'Guardar Esquema',
+    fSaveStudent: 'Alumno',
+    fSaveTeacher: 'Profesor',
+    fSavePNG: 'Guardar Imagen',
+    fCompare: 'Comparar Archivos',
+    fAbout: 'Sobre...',
+    examplesMenu: 'Ejemplos',
+    singleMenu: 'Simple',
+    doubleMenu: 'Doble',
+    multipleMenu: 'Múltiple',
+    drawMenu: 'Dibujar',
+    valvesMenu: 'Válvulas',
+    cValve22m: 'Válvula 2/2 manual',
+    cValve32b: 'Válvula 3/2 pulsador',
+    cValve32m: 'Válvula 3/2 manual',
+    cValve32r: 'Válvula 3/2 con rodillo',
+    cRoller: 'Rodillo de válvula',
+    cValve32p: 'Válvula 3/2 pilotada neum.',
+    cValve42m: 'Válvula 4/2 manual',
+    cValve52m: 'Válvula 5/2 manual',
+    cValve52p: 'Válvula 5/2 pilotada neum.',
+    auxValvesMenu: 'Válvulas aux.',
+    cValveNret: 'Válvula antirretorno',
+    cValveFlow: 'Válvula estranguladora',
+    cValveOr: 'Válvula selectora (OR)',
+    cValveAnd: 'Válvula simultaneidad (AND)',
+    cylinderMenu: 'Cilindros',
+    cCylinder1: 'Simple efecto',
+    cCylinder2: 'Doble efecto',
+    cPress: 'Compresor',
+    cManometer: 'Manómetro',
+    cPipe: 'Tubería',
+    cEscape: 'Escape',
+    cText: 'Texto',
+    editMenu: 'Editar',
+    eDelete: 'Borrar',
+    eMove: 'Mover',
+    eOptions: 'Opciones',
+    eFlip: 'Voltear',
+    componentMenuTitle: 'Acciones del elemento',
+    componentMenuCloseBtn: 'Cerrar',
+    statusReady: 'Listo: arrastra elementos, haz doble clic para acciones o elige una herramienta para insertar.',
+    statusDragging: 'Arrastrando elemento: suelta el ratón para dejarlo.',
+    statusInsert: 'Insertar {component}: haz clic en el lienzo para colocarlo.',
+    statusPipeStart: 'Insertar tubería: haz clic en el punto inicial.',
+    statusPipeEnd: 'Insertar tubería: haz clic en el punto final.',
+    statusDelete: 'Modo borrar: haz clic en un componente para eliminarlo.',
+    statusMove: 'Modo mover: haz clic en un componente para cogerlo y otro clic para soltarlo.',
+    statusOptions: 'Modo opciones: haz clic en un componente para editarlo.',
+    statusFlip: 'Modo voltear: haz clic en un componente para voltearlo.',
+    statusSimulation: 'Simulación en marcha: deténla antes de editar el esquema.',
+    quickSimPlay: 'Iniciar simulación',
+    quickSimStop: 'Detener simulación',
+    simulateMenu: 'Simular',
+    sInit: 'Iniciar',
+    sStep: "Paso 's'",
+    sStop: 'Detener',
+    sContinue: 'Continuar',
+    sReset: 'Reiniciar',
+  }
+}
+
+const componentTypeTranslationKeys = {
+  Pipe: 'cPipe',
+  Compressor: 'cPress',
+  Manometer: 'cManometer',
+  Escape: 'cEscape',
+  Text: 'cText',
+  Cylinder1: 'cCylinder1',
+  Cylinder2: 'cCylinder2',
+  Valve22m: 'cValve22m',
+  Valve32b: 'cValve32b',
+  Valve32m: 'cValve32m',
+  Valve32r: 'cValve32r',
+  Roller: 'cRoller',
+  Valve32p: 'cValve32p',
+  Valve42m: 'cValve42m',
+  Valve52m: 'cValve52m',
+  Valve52p: 'cValve52p',
+  ValveNret: 'cValveNret',
+  ValveFlow: 'cValveFlow',
+  ValveOr: 'cValveOr',
+  ValveAnd: 'cValveAnd',
+};
+
+function t(key) {
+  const lang = translations[globalLang] ? globalLang : 'en';
+  return translations[lang][key] || translations.en[key] || key;
+}
+
+function tFormat(key, values = {}) {
+  let text = t(key);
+  for (const [name, value] of Object.entries(values)) {
+    text = text.replaceAll(`{${name}}`, value);
+  }
+  return text;
+}
+
+function componentTypeLabel(type) {
+  const key = componentTypeTranslationKeys[type];
+  return key ? t(key) : type;
+}
+
+function currentStatusText() {
+  if (isSimulationRunning()) {
+    return t('statusSimulation');
+  }
+
+  if (ui && ui.dragState && ui.dragState.moved) {
+    return t('statusDragging');
+  }
+
+  if (drawMode === 'component') {
+    if (componentType === 'Pipe') {
+      return (initPos === null) ? t('statusPipeStart') : t('statusPipeEnd');
+    }
+    return tFormat('statusInsert', { component: componentTypeLabel(componentType) });
+  }
+
+  if (drawMode === 'Delete') return t('statusDelete');
+  if (drawMode === 'Move') return t('statusMove');
+  if (drawMode === 'Options') return t('statusOptions');
+  if (drawMode === 'Flip') return t('statusFlip');
+  return t('statusReady');
+}
+
+function isSimulationRunning() {
+  return simulationActive && animationID !== null;
+}
+
+function normalizeExampleFilename(filename = '') {
+  return filename.replace(/^[./]+/, '');
+}
+
+function updateExampleQuery(filename) {
+  const normalizedFilename = normalizeExampleFilename(filename);
+  try {
+    const url = new URL(window.location.href);
+
+    if (normalizedFilename) {
+      url.searchParams.set('loadFile', normalizedFilename);
+    }
+    else {
+      url.searchParams.delete('loadFile');
+    }
+
+    history.replaceState({ loadFile: normalizedFilename }, '', url);
+  } catch (error) {
+    console.warn('Could not update example URL:', error);
+  }
+}
+
+
+/*************************  MENU  *************************/
+function closeAllSubmenus() {
+  document.querySelectorAll(".submenu").forEach((submenu) => {
+    submenu.classList.remove("active");
+  });
+}
+
+document.addEventListener("click", (e) => {
+  const trigger = e.target.closest(".menu-titulo, .has-submenu > a");
+  const navigationLink = e.target.closest('.submenu a[href]');
+
+  if (navigationLink && navigationLink.getAttribute('href') !== '#' && !trigger) {
+    setTimeout(closeAllSubmenus, 0);
+    return;
+  }
+
+  // Click out of menu? close all
+  if (!trigger) {
+    closeAllSubmenus();
+    return;
+  }
+
+  const submenu = trigger.nextElementSibling;
+  if (!submenu || !submenu.classList.contains("submenu")) return;
+
+  // Cerrar submenús hermanos
+  const siblings = trigger.parentElement.parentElement
+    .querySelectorAll(":scope > li > .submenu");
+
+  siblings.forEach(sm => {
+    if (sm !== submenu) sm.classList.remove("active");
+  });
+
+  submenu.classList.toggle("active");
+});
+
+document.addEventListener("click", async (e) => {
+  const exampleLink = e.target.closest("[data-example-file]");
+  if (!exampleLink) return;
+
+  e.preventDefault();
+  closeAllSubmenus();
+  const loaded = await loadExampleFile(exampleLink.dataset.exampleFile);
+  if (!loaded) {
+    const href = exampleLink.getAttribute('href');
+    if (href && href !== '#') {
+      window.location.href = href;
+    }
+  }
+});
+
+
+/* menu actions */
+function updateToolboxSelection() {
+  toolButtons.forEach((button) => {
+    const active = drawMode === 'component' &&
+      button.dataset.componentType === componentType;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+}
+
+document.addEventListener("click", (e) => {
+  const item = e.target.closest("[data-action]");
+  if (!item) return;
+
+  if (item.tagName === 'A') {
+    e.preventDefault();
+  }
+
+  const action = item.dataset.action;
+
+  const actions = {
+    fSwap: () => { swapScreen() },
+    fNew: () => { updateExampleQuery(''); resetEditor() },
+    fOpen: () => { updateExampleQuery(''); openSchema(); },
+    fSaveStudent: () => { saveSchema('student'); },
+    fSaveTeacher: () => { saveSchema('teacher'); },
+    fSavePNG: () => { savePNG(); },
+    fCompare: () => { compareFilesShow(); },
+    enLang: () => { enLang(); },
+    esLang: () => { esLang(); },
+    fAbout: () => { aboutWindowShow(); },
+
+    cPipe: () =>      { simulationStop(); drawMode='component'; componentType='Pipe'; },
+    cPress: () =>     { simulationStop(); drawMode='component'; componentType='Compressor'; },
+    cManometer: () => { simulationStop(); drawMode='component'; componentType='Manometer'; },
+    cEscape: () =>    { simulationStop(); drawMode='component'; componentType='Escape'; },
+    cText: () =>      { simulationStop(); drawMode='component'; componentType='Text'; },
+    cValve22m: () =>  { simulationStop(); drawMode='component'; componentType='Valve22m'; },
+    cValve32b: () =>  { simulationStop(); drawMode='component'; componentType='Valve32b'; },
+    cValve32m: () =>  { simulationStop(); drawMode='component'; componentType='Valve32m'; },
+    cValve32r: () =>  { simulationStop(); drawMode='component'; componentType='Valve32r'; },
+    cRoller: () =>    { simulationStop(); drawMode='component'; componentType='Roller'; },
+    cValve32p: () =>  { simulationStop(); drawMode='component'; componentType='Valve32p'; },
+    cValve42m: () =>  { simulationStop(); drawMode='component'; componentType='Valve42m'; },
+    cValve52m: () =>  { simulationStop(); drawMode='component'; componentType='Valve52m'; },
+    cValve52p: () =>  { simulationStop(); drawMode='component'; componentType='Valve52p'; },
+    cValveOr: () =>   { simulationStop(); drawMode='component'; componentType='ValveOr'; },
+    cValveAnd: () =>  { simulationStop(); drawMode='component'; componentType='ValveAnd'; },
+    cValveNret: () => { simulationStop(); drawMode='component'; componentType='ValveNret'; },
+    cValveFlow: () => { simulationStop(); drawMode='component'; componentType='ValveFlow'; },
+    cCylinder1: () => { simulationStop(); drawMode='component'; componentType='Cylinder1'; },
+    cCylinder2: () => { simulationStop(); drawMode='component'; componentType='Cylinder2'; },
+
+    eDelete: () => { simulationStop(); drawMode='Delete'; },
+    eMove: () => { simulationStop(); drawMode='Move'; },
+    eOptions: () => { simulationStop(); drawMode='Options'; },
+    eFlip: () => { simulationStop(); drawMode='Flip'; },
+
+    sInit: () => { simulationInit(); },
+    sToggle: () => { simulationToggle(); },
+    sStep: () => { simulationStep(); },
+    sStop: () => { simulationStop(); },
+    sContinue: () => { simulationContinue(); },
+    sReset: () => { simulationReset(); },
+  };
+
+  actions[action]?.();
+  if (drawMode === 'component' && componentType !== 'Pipe' && mousePosition) {
+    updatePlacementPreview(mousePosition);
+  }
+  if (drawMode !== 'component' || componentType === 'Pipe') {
+    clearPlacementPreview();
+  }
+  renderer.draw();
+  updateToolboxSelection();
+
+  // Close submenus after action
+  closeAllSubmenus();
+});
+
+
+/*************************************************************************/
+class ComponentBase {
+  constructor(pos){
+    this.timestamp = this.timestamp();
+    this.x = snap(pos.x);
+    this.y = snap(pos.y);
+    this.type = 'ComponentBase';
+    this.selected = false;
+    this.grid = grid;
+    this.options = {};
+  }
+
+  move(x, y) {
+    this.x = snap(x, this.grid);
+    this.y = snap(y, this.grid);
+  }
+
+  timestamp() {
+    const seconds = Math.floor(Date.now()*0.1);
+    return seconds.toString(16).toUpperCase();
+  }
+
+  near() {
+    return null;
+  }
+
+  nearPos(a, b) {
+    if ((Math.abs(a.x - b.x) <= nearDist) && (Math.abs(a.y - b.y) <= nearDist)) {
+       return true;
+    }
+    else {
+      return null;
+    }
+  }
+
+  nearRect(a_x, a_y, b_x, b_y, pos) {
+    const minX = Math.min(a_x, b_x);
+    const maxX = Math.max(a_x, b_x);
+    const minY = Math.min(a_y, b_y);
+    const maxY = Math.max(a_y, b_y);
+    if (pos.x >= minX && pos.x <= maxX &&
+        pos.y >= minY && pos.y <= maxY) {
+      return true;
+    }
+    return false;
+  }
+
+  nearLine(a, b, pos, margin=nearDist) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const length2 = dx * dx + dy * dy;
+
+    if (length2 === 0) {
+      return this.nearPos(a, pos);
+    }
+
+    let t = ((pos.x - a.x) * dx + (pos.y - a.y) * dy) / length2;
+    t = Math.max(0, Math.min(1, t));
+
+    const closestX = a.x + t * dx;
+    const closestY = a.y + t * dy;
+
+    return Math.hypot(pos.x - closestX, pos.y - closestY) <= margin;
+  }
+
+  draw(ctx){
+  }
+
+  validateOptions() {
+  }
+
+  drawPipe(ctx, color=defaultColor) {
+    if (this.selected) color = selectedColor;
+
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
+    ctx.fillRect(this.init.x-lineWidth, this.init.y-lineWidth, lineWidth*2, lineWidth*2);
+    ctx.fillRect(this.end.x-lineWidth, this.end.y-lineWidth, lineWidth*2, lineWidth*2);
+    ctx.moveTo(this.init.x, this.init.y);
+    ctx.lineTo(this.end.x, this.end.y);
+    ctx.stroke();
+  }
+
+  drawPort(ctx, pos_x, pos_y, size_x, size_y, color=defaultColor) {
+    if (this.selected) color = selectedColor;
+
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(pos_x, pos_y);
+    ctx.lineTo(pos_x+size_x, pos_y+size_y);
+    ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.fillRect(pos_x-lineWidth, pos_y-lineWidth, lineWidth*2, lineWidth*2);
+  }
+
+  drawArrow(ctx, init_x, init_y, end_x, end_y, color=defaultColor) {
+    const arrowHeadSize = 8;
+    const arrowAngle = Math.PI/10;
+    const angle = Math.atan2(end_y - init_y, end_x - init_x);
+
+    if (this.selected) color = selectedColor;
+
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+
+    // Body line
+    ctx.beginPath();
+    ctx.moveTo(init_x, init_y);
+    ctx.lineTo(end_x - arrowHeadSize * Math.cos(angle),
+               end_y - arrowHeadSize * Math.sin(angle));
+    ctx.stroke();
+
+    // Arrow
+    ctx.beginPath();
+    ctx.moveTo(end_x, end_y);
+    ctx.lineTo(end_x - arrowHeadSize * Math.cos(angle - arrowAngle),
+               end_y - arrowHeadSize * Math.sin(angle - arrowAngle));
+    ctx.lineTo(end_x - arrowHeadSize * Math.cos(angle + arrowAngle),
+               end_y - arrowHeadSize * Math.sin(angle + arrowAngle));
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  drawTap(ctx, init_x, init_y, end_x, end_y, color=defaultColor) {
+    if (this.selected) color = selectedColor;
+
+    const tapSize = 5;
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(init_x, init_y);
+    ctx.lineTo(end_x, end_y);
+    ctx.moveTo(end_x-tapSize, end_y);
+    ctx.lineTo(end_x+tapSize, end_y);
+    ctx.stroke();
+  }
+
+  drawRectangle(ctx, init_x, init_y, end_x, end_y, color=defaultColor) {
+    if (this.selected) color = selectedColor;
+
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.strokeRect(init_x, init_y, end_x-init_x, end_y-init_y);
+    ctx.stroke();
+  }
+
+  drawCamera(ctx, init_x, init_y, end_x, end_y, color=defaultColor) {
+    if (this.selected) color = selectedColor;
+
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(end_x, init_y + 10);
+    ctx.lineTo(end_x, init_y);
+    ctx.lineTo(init_x, init_y);
+    ctx.lineTo(init_x, end_y);
+    ctx.lineTo(end_x, end_y);
+    ctx.lineTo(end_x, end_y - 10);
+    ctx.stroke();
+  };
+
+  drawSpring(ctx, init_x, init_y, color=defaultColor) {
+    if (this.selected) color = selectedColor;
+
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.moveTo(init_x, init_y);
+    ctx.lineTo(init_x+5, init_y-10);
+    ctx.lineTo(init_x+10, init_y);
+    ctx.lineTo(init_x+15, init_y-10);
+    ctx.lineTo(init_x+20, init_y);
+    ctx.stroke();
+  }
+
+  drawPushLever(ctx, init_x, init_y, color=defaultColor) {
+    if (this.selected) color = selectedColor;
+
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.moveTo(init_x, init_y);
+    ctx.lineTo(init_x-20, init_y);
+    ctx.lineTo(init_x-20, init_y-10);
+    ctx.lineTo(init_x-13, init_y-10);
+    ctx.lineTo(init_x-10, init_y-5);
+    ctx.lineTo(init_x-7, init_y-10);
+    ctx.lineTo(init_x, init_y-10);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(init_x-20, init_y+5);
+    ctx.lineTo(init_x-20, init_y-15);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(init_x-10, init_y-15);
+    ctx.lineTo(init_x-10, init_y-10);
+    ctx.stroke();
+  }
+
+  drawPushButton(ctx, init_x, init_y, color=defaultColor) {
+    if (this.selected) color = selectedColor;
+
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.moveTo(init_x, init_y);
+    ctx.lineTo(init_x-15, init_y);
+    ctx.lineTo(init_x-15, init_y-10);
+    ctx.lineTo(init_x, init_y-10);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(init_x-15, init_y+5);
+    ctx.lineTo(init_x-15, init_y-15);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(init_x-15, init_y-5, 10, Math.PI*0.5, Math.PI*1.5);
+    ctx.stroke();
+  }
+
+  drawPushRoller(ctx, init_x, init_y, color=defaultColor) {
+    if (this.selected) color = selectedColor;
+
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(init_x, init_y-4);
+    ctx.lineTo(init_x-12, init_y-4);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(init_x, init_y+4);
+    ctx.lineTo(init_x-12, init_y+4);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(init_x-16, init_y, 6, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(init_x-16, init_y, 1, 0, Math.PI*2);
+    ctx.stroke();
+  }
+
+  drawPneuLeftPilot(ctx, posX, length, color=defaultColor) {
+    if (this.selected) color = selectedColor;
+
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(posX-44, this.y-20);
+    ctx.lineTo(this.x+length, this.y-20);
+    ctx.stroke();
+    this.drawRectangle(ctx, posX-30, this.y-27, posX-44, this.y-13, color);
+    ctx.beginPath();
+    ctx.moveTo(posX-44, this.y-27);
+    ctx.lineTo(posX-34, this.y-20);
+    ctx.lineTo(posX-44, this.y-13);
+    ctx.stroke();
+  };
+
+  drawPneuRightPilot(ctx, posX, length, color=defaultColor) {
+    if (this.selected) color = selectedColor;
+
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(posX+44, this.y-20);
+    ctx.lineTo(this.x+length, this.y-20);
+    ctx.stroke();
+    this.drawRectangle(ctx, posX+30, this.y-27, posX+44, this.y-13, color);
+    ctx.beginPath();
+    ctx.moveTo(posX+44, this.y-27);
+    ctx.lineTo(posX+34, this.y-20);
+    ctx.lineTo(posX+44, this.y-13);
+    ctx.stroke();
+  }
+
+  update(ctx, engine, dt) {}
+
+  reset () {}
+
+  colorPressure(pressure, bg = 0) {
+    if (bg === 0) {
+      let cp = 32 + Math.round(223 * Math.sqrt((pressure - airPressure) / (compressorPressure - airPressure)));
+      return 'rgb(' + 0 + ',' + 0 + ',' + cp + ')';
+    }
+    else {
+      let cp = 255 - Math.round(192 * ((pressure - airPressure) / (compressorPressure - airPressure)));
+      return 'rgb(' + cp + ',' + cp + ',' + 255 + ')';
+    }
+  }
+
+  computeFlow(node1, node2, conductance, dt) {
+    const m1 = node1.mass;
+    const m2 = node2.mass;
+    const volume1 = node1.volume;
+    const volume2 = node2.volume;
+
+    function flow(m1, m2) {
+      const dp = m1 / volume1 - m2 / volume2;
+      return conductance * Math.sign(dp) * Math.sqrt(Math.abs(dp));
+    }
+
+    const q1 = flow(m1, m2);
+    const k1_m = dt * q1;
+
+    const q2 = flow(m1 - 0.5*k1_m, m2 + 0.5*k1_m);
+    const k2_m = dt * q2;
+
+    const q3 = flow(m1 - 0.5*k2_m, m2 + 0.5*k2_m);
+    const k3_m = dt * q3;
+
+    const q4 = flow(m1 - k3_m, m2 + k3_m);
+    const k4_m = dt * q4;
+
+    const dm = (k1_m + 2*k2_m + 2*k3_m + k4_m)/6;
+
+    node1.mass -= dm;
+    node2.mass += dm;
+
+    node1.pressure = node1.mass / node1.volume;
+    node2.pressure = node2.mass / node2.volume;
+  }
+
+  serialize() {
+    return {type:this.type, stamp:this.timestamp, x:this.x, y:this.y, options:this.options};
+  }
+}
+
+
+class Text extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.x = snap(pos.x, grid*0.5);
+    this.y = snap(pos.y, grid*0.5);
+    this.type = 'Text';
+    this.width = 30;
+    this.grid = grid*0.5;
+    this.color = defaultColor;
+    this.options = {
+      text: 'Text',
+    };
+  }
+
+  vias() {
+    return [];
+  }
+
+  near(pos) {
+    return this.nearRect(this.x, this.y-10, this.x+this.width, this.y+5, pos);
+  }
+
+  validateOptions() {
+    if (this.options.text.length > 150)
+      this.options.text = this.options.text.slice(0, 150);
+  }
+
+  draw(ctx) {
+    const metrics = ctx.measureText(this.options.text);
+    this.width = metrics.width + 10;
+    ctx.lineWidth = lineWidth;
+    ctx.font = textFont;
+    ctx.fillStyle = (this.selected) ? selectedColor : this.color;
+    ctx.fillText(this.options.text, this.x, this.y+5);
+  }
+}
+
+
+class Pipe extends ComponentBase {
+  constructor(posInit, posEnd) {
+    super(posInit);
+    this.type = 'Pipe';
+    this.init = {x: snap(posInit.x), y: snap(posInit.y)};
+    this.end = {x: snap(posEnd.x), y: snap(posEnd.y)};
+    this.conductance = conductanceBase;
+    this.color = defaultColor;
+  }
+
+  vias() {
+    const via1 = this.init;
+    const via2 = this.end;
+    return [via1, via2];
+  }
+
+  reset() {
+    this.color = defaultColor;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    this.computeFlow(node1, node2, this.conductance, dt);
+    this.color = this.colorPressure(0.5*(node1.pressure + node2.pressure));
+  }
+
+  moveInit(pos) {
+    this.init = {x: snap(pos.x), y: snap(pos.y)};
+  }
+
+  moveEnd(pos) {
+    this.end = {x: snap(pos.x), y: snap(pos.y)};
+  }
+
+  move(x, y) {
+    const newInit = {x: snap(x), y: snap(y)};
+    const dx = newInit.x - this.init.x;
+    const dy = newInit.y - this.init.y;
+    this.init = newInit;
+    this.end = {x: this.end.x + dx, y: this.end.y + dy};
+  }
+
+  near(pos) {
+    if (this.nearPos(this.init, pos)) {
+      return 'init';
+    }
+    if (this.nearPos(this.end, pos)) {
+      return 'end';
+    }
+    if (this.nearLine(this.init, this.end, pos)) {
+      return 'move';
+    }
+    return null;
+  }
+
+  draw(ctx) {
+    this.drawPipe(ctx, this.color);
+  };
+
+  serialize(){
+    return {type:this.type, stamp:this.timestamp, init:this.init, end:this.end};
+  }
+}
+
+
+class Manometer extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Manometer';
+    this.pressure = airPressure;
+    this.color = defaultColor;
+    this.selected = false;
+    this.options = {
+      flipped: false,
+    }
+
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    return [via1];
+  }
+
+  reset() {
+    this.color = defaultColor;
+  }
+
+  flip() {
+    if (this.options.flipped === true) {
+      this.options.flipped = false;
+    }
+    else {
+      this.options.flipped = true;
+    }
+  }
+
+  update(ctx, engine, dt) {
+    const [via1] = this.vias()
+    const node = engine.findNode(via1);
+
+    this.pressure = node.pressure;
+    this.color = this.colorPressure(this.pressure);
+  }
+
+  near(pos) {
+    if (this.options.flipped)
+      return this.nearRect(this.x-15, this.y+10, this.x+15, this.y+46, pos);
+    else
+      return this.nearRect(this.x-15, this.y-10, this.x+15, this.y-46, pos);
+  }
+
+  draw(ctx) {
+    ctx.lineWidth = lineWidth;
+
+    if (this.options.flipped) {
+      this.drawPort(ctx, this.x, this.y, 0, 10, this.color);
+
+      ctx.strokeStyle = (this.selected) ? selectedColor : this.color;
+      ctx.beginPath();
+      ctx.arc(this.x,this.y+22,12,0,Math.PI*2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      this.drawArrow(ctx, this.x+7, this.y+22+7, this.x-5, this.y+22-5, this.color);
+      ctx.stroke();
+
+      ctx.font = textFont;
+      ctx.fillStyle = (this.selected) ? selectedColor : this.color;
+      ctx.textAlign = "center";
+      ctx.fillText((this.pressure-airPressure).toFixed(1), this.x, this.y+48);
+      ctx.textAlign = "start";
+    }
+    else {
+      this.drawPort(ctx, this.x, this.y, 0, -10, this.color);
+
+      ctx.strokeStyle = (this.selected) ? selectedColor : this.color2;
+      ctx.beginPath();
+      ctx.arc(this.x,this.y-22,12,0,Math.PI*2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      this.drawArrow(ctx, this.x+7, this.y-22+7, this.x-5, this.y-22-5, this.color);
+      ctx.stroke();
+
+      ctx.font = textFont;
+      ctx.fillStyle = (this.selected) ? selectedColor : this.color;
+      ctx.textAlign = "center";
+      ctx.fillText((this.pressure-airPressure).toFixed(1), this.x, this.y-38);
+      ctx.textAlign = "start";
+    }
+  }
+}
+
+
+class Compressor extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Compressor';
+    this.color = defaultColor;
+    this.options = {
+      pressure: compressorPressure,
+    }
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    return [via1];
+  }
+
+  reset() {
+    this.color = defaultColor;
+  }
+
+  validateOptions() {
+    this.options.pressure = Number(this.options.pressure);
+    if (isNaN(this.options.pressure)) {
+      this.options.pressure = compressorPressure;
+    }
+    if (this.options.pressure > compressorPressure) {
+      this.options.pressure = compressorPressure;
+    }
+    if (this.options.pressure < 0.5) {
+      this.options.pressure = 0.5;
+    }
+  }
+
+  update(ctx, engine, dt) {
+    const [via1] = this.vias()
+    const node = engine.findNode(via1);
+    node.pressure = this.options.pressure + airPressure;
+    node.mass = node.pressure * node.volume;
+    this.color = this.colorPressure(node.pressure);
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-8, this.y+5, this.x+8, this.y+25, pos);
+  }
+
+  draw(ctx) {
+    ctx.lineWidth = lineWidth;
+    this.drawPort(ctx, this.x, this.y, 0, 10, this.color);
+    ctx.beginPath();
+    ctx.arc(this.x,this.y+10+7,7,0,Math.PI*2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(this.x,this.y+10+7,2,0,Math.PI*2);
+    ctx.stroke();
+  }
+}
+
+
+class ValveNret extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'ValveNret';
+    this.conductance = conductanceBase;
+    this.minPressure = 0.02; // bar
+    this.active = false;
+    this.options = {
+      flipped: false,
+    };
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    const via2 = {x:this.x, y:this.y-50};
+    return [via1, via2];
+  }
+
+  reset () {
+    this.active = false;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    let dpress = 0;
+    if (this.options.flipped) {
+      dpress = node2.pressure - node1.pressure;
+    }
+    else {
+      dpress = node1.pressure - node2.pressure;
+    }
+    if (dpress > this.minPressure) {
+      this.computeFlow(node1, node2, this.conductance, dt);
+      this.active = true;
+    }
+    else {
+      this.active = false;
+    }
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+  }
+
+  flip() {
+    if (this.options.flipped) this.options.flipped = false;
+    else this.options.flipped = true;
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-10, this.y-40, this.x+10, this.y-10, pos);
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x, this.y, 0, -10, this.color1);
+    this.drawPort(ctx, this.x, this.y-50, 0, 10, this.color2);
+    if (this.options.flipped) {
+      this.drawValveNretFlipped(ctx);
+    }
+    else {
+      this.drawValveNret(ctx);
+    }
+  }
+
+  drawValveNretFlipped(ctx) {
+    ctx.strokeStyle = (this.selected) ? selectedColor : this.color2;
+    ctx.beginPath();
+    ctx.lineTo(this.x, this.y-40);
+    ctx.lineTo(this.x, this.y-35);
+    ctx.lineTo(this.x-10, this.y-25);
+    ctx.lineTo(this.x, this.y-35);
+    ctx.lineTo(this.x+10, this.y-25);
+    ctx.stroke();
+
+    if (this.active === false) {
+      ctx.strokeStyle = (this.selected) ? selectedColor : this.color1;
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y-18);
+      ctx.lineTo(this.x, this.y-10);
+      ctx.stroke();
+
+      ctx.strokeStyle = (this.selected) ? selectedColor : defaultColor;
+      ctx.beginPath();
+      ctx.arc(this.x,this.y-24, 6, 0, Math.PI*2);
+      ctx.stroke();
+    }
+    else {
+      ctx.strokeStyle = (this.selected) ? selectedColor : this.color1;
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y-14);
+      ctx.lineTo(this.x, this.y-10);
+      ctx.stroke();
+
+      ctx.strokeStyle = (this.selected) ? selectedColor : defaultColor;
+      ctx.beginPath();
+      ctx.arc(this.x,this.y-20, 6, 0, Math.PI*2);
+      ctx.stroke();
+    }
+  }
+
+  drawValveNret(ctx) {
+    ctx.strokeStyle = (this.selected) ? selectedColor : this.color1;
+    ctx.beginPath();
+    ctx.lineTo(this.x, this.y-10);
+    ctx.lineTo(this.x, this.y-15);
+    ctx.lineTo(this.x-10, this.y-25);
+    ctx.lineTo(this.x, this.y-15);
+    ctx.lineTo(this.x+10, this.y-25);
+    ctx.stroke();
+
+    ctx.beginPath();
+    if (this.active === false) {
+      ctx.strokeStyle = (this.selected) ? selectedColor : this.color2;
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y-32);
+      ctx.lineTo(this.x, this.y-40);
+      ctx.stroke();
+
+      ctx.strokeStyle = (this.selected) ? selectedColor : defaultColor;
+      ctx.beginPath();
+      ctx.arc(this.x,this.y-26, 6, 0, Math.PI*2);
+      ctx.stroke();
+    }
+    else {
+      ctx.strokeStyle = (this.selected) ? selectedColor : this.color2;
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y-36);
+      ctx.lineTo(this.x, this.y-40);
+      ctx.stroke();
+
+      ctx.strokeStyle = (this.selected) ? selectedColor : defaultColor;
+      ctx.beginPath();
+      ctx.arc(this.x,this.y-30, 6, 0, Math.PI*2);
+      ctx.stroke();
+    }
+    ctx.stroke();
+  }
+}
+
+
+class ValveFlow extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'ValveFlow';
+    this.options = {
+      conductance: 100,
+    }
+    this.color = defaultColor;
+  }
+
+  validateOptions() {
+    this.options.conductance = Number(this.options.conductance);
+    if (isNaN(this.options.conductance))
+      this.options.conductance = 100;
+    if (this.options.conductance > 1000)
+      this.options.conductance = 1000;
+    if (this.options.conductance < 10)
+      this.options.conductance = 10;
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    const via2 = {x:this.x, y:this.y-50};
+    return [via1, via2];
+  }
+
+  reset() {
+    this.color = defaultColor;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    this.computeFlow(node1, node2, this.options.conductance, dt);
+    this.color = this.colorPressure(0.5*(node1.pressure + node2.pressure));
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-15, this.y-40, this.x+15, this.y-10, pos);
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x, this.y, 0, -10, this.color);
+    this.drawPort(ctx, this.x, this.y-50, 0, 10, this.color);
+    this.drawValveFlow(ctx);
+  }
+
+  drawValveFlow(ctx) {
+    ctx.strokeStyle = (this.selected) ? selectedColor : this.color;
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y-10);
+    ctx.lineTo(this.x, this.y-40);
+    ctx.stroke();
+
+    ctx.strokeStyle = (this.selected) ? selectedColor : defaultColor;
+    ctx.fillStyle = (this.selected) ? selectedColor : defaultColor;
+    ctx.beginPath();
+    ctx.arc(this.x-25,this.y-25, 22, -Math.PI*0.16, Math.PI*0.16);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(this.x+25,this.y-25, 22, Math.PI*0.84, Math.PI*1.16);
+    ctx.stroke();
+    this.drawArrow(ctx, this.x-18, this.y-15, this.x+18, this.y-35);
+  }
+}
+
+
+class ValveOr extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'ValveOr';
+    this.shift = 14;
+    this.maxShift = 28;
+    this.conductance = conductanceBase;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+  }
+
+  vias() {
+    const in1 = {x:this.x-40, y:this.y+30};
+    const in2 = {x:this.x+40, y:this.y+30};
+    const out = {x:this.x, y:this.y};
+    return [in1, in2, out];
+  }
+
+  reset () {
+    this.shift = this.maxShift*0.5;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2, via3] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    const node3 = engine.findNode(via3);
+
+    if (this.shift !== this.maxShift) {
+      this.computeFlow(node2, node3, this.conductance, dt);
+    }
+    if (this.shift !== 0) {
+      this.computeFlow(node1, node3, this.conductance, dt);
+    }
+
+    if (this.shift !== this.maxShift && node1.pressure > node2.pressure + 0.1) {
+      this.shift = this.maxShift;
+    }
+    if (this.shift !== 0 && node2.pressure > node1.pressure + 0.1) {
+      this.shift = 0;
+    }
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+    this.color3 = this.colorPressure(node3.pressure);
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-30, this.y+15, this.x+30, this.y+45, pos);
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x-40, this.y+30, 12, 0, this.color1);
+    this.drawPort(ctx, this.x+40, this.y+30, -12, 0, this.color2);
+    this.drawPort(ctx, this.x, this.y, 0, 17, this.color3);
+    this.drawValveOr(ctx);
+    this.drawMovement(ctx);
+  }
+
+  drawValveOr(ctx) {
+    ctx.strokeStyle = (this.selected) ? selectedColor : this.color1;
+    ctx.beginPath();
+    ctx.moveTo(this.x-18, this.y+20);
+    ctx.lineTo(this.x-28, this.y+30);
+    ctx.lineTo(this.x-18, this.y+40);
+    ctx.stroke();
+
+    ctx.strokeStyle = (this.selected) ? selectedColor : this.color2;
+    ctx.beginPath();
+    ctx.moveTo(this.x+18, this.y+20);
+    ctx.lineTo(this.x+28, this.y+30);
+    ctx.lineTo(this.x+18, this.y+40);
+    ctx.stroke();
+
+    this.drawRectangle(ctx, this.x-30, this.y+17, this.x+30, this.y+43);
+  }
+
+  drawMovement(ctx) {
+    const posX = this.x + this.shift;
+    ctx.strokeStyle = (this.selected) ? selectedColor : defaultColor;
+    ctx.beginPath();
+    ctx.arc(posX-14,this.y+30, 8, 0, Math.PI*2);
+    ctx.stroke();
+  }
+}
+
+
+class ValveAnd extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'ValveAnd';
+    this.shift = 4;
+    this.maxShift = 8;
+    this.conductance = conductanceBase;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.color1w = '#fff';
+    this.color2w = '#fff';
+    this.color3w = '#fff';
+  }
+
+  vias() {
+    const in1 = {x:this.x-40, y:this.y+30};
+    const in2 = {x:this.x+40, y:this.y+30};
+    const out = {x:this.x, y:this.y};
+    return [in1, in2, out];
+  }
+
+  reset () {
+    this.shift = maxShift * 0.5;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.color1w = '#fff';
+    this.color2w = '#fff';
+    this.color3w = '#fff';
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2, via3] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    const node3 = engine.findNode(via3);
+
+    if (this.shift !== this.maxShift) {
+      this.computeFlow(node1, node3, this.conductance, dt);
+    }
+    if (this.shift !== 0) {
+      this.computeFlow(node2, node3, this.conductance, dt);
+    }
+
+    if (node1.pressure > node2.pressure + 0.1) {
+      this.shift = this.maxShift;
+    }
+    if (node2.pressure > node1.pressure + 0.1) {
+      this.shift = 0;
+    }
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+    this.color3 = this.colorPressure(node3.pressure);
+    this.color1w = this.colorPressure(node1.pressure, 1);
+    this.color2w = this.colorPressure(node2.pressure, 1);
+    this.color3w = this.colorPressure(node3.pressure, 1);
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-30, this.y+15, this.x+30, this.y+45, pos);
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x-40, this.y+30, 10, 0, this.color1);
+    this.drawPort(ctx, this.x+40, this.y+30, -10, 0, this.color2);
+    this.drawPort(ctx, this.x, this.y, 0, 17, this.color3);
+    this.drawPressures(ctx);
+    this.drawValveAnd(ctx);
+    this.drawMovement(ctx);
+  }
+
+  drawPressures(ctx) {
+    ctx.fillStyle = this.color1w;
+    ctx.fillRect(this.x-30, this.y+17, 14, 26);
+    ctx.fillStyle = this.color2w;
+    ctx.fillRect(this.x+14, this.y+17, 15, 26);
+    ctx.fillStyle = this.color3w;
+    ctx.fillRect(this.x-16, this.y+17, 32, 26);
+  }
+
+  drawValveAnd(ctx) {
+    this.drawRectangle(ctx, this.x-30, this.y+17, this.x+30, this.y+43);
+
+    ctx.strokeStyle = (this.selected) ? selectedColor : defaultColor;
+    ctx.beginPath();
+    ctx.moveTo(this.x-15, this.y+17);
+    ctx.lineTo(this.x-15, this.y+26);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(this.x-15, this.y+43);
+    ctx.lineTo(this.x-15, this.y+34);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(this.x+15, this.y+17);
+    ctx.lineTo(this.x+15, this.y+26);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(this.x+15, this.y+43);
+    ctx.lineTo(this.x+15, this.y+34);
+    ctx.stroke();
+  }
+
+  drawMovement(ctx) {
+    const posX = this.x + this.shift;
+    ctx.beginPath();
+    ctx.moveTo(posX-25, this.y+21);
+    ctx.lineTo(posX-25, this.y+39);
+    ctx.moveTo(posX-25, this.y+30);
+    ctx.lineTo(posX+17, this.y+30);
+    ctx.moveTo(posX+17, this.y+21);
+    ctx.lineTo(posX+17, this.y+39);
+    ctx.stroke();
+  }
+}
+
+
+class Escape extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Escape';
+    this.pressure = airPressure;
+    this.color = defaultColor;
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    return [via1];
+  }
+
+
+  update(ctx, engine, dt) {
+    const [via1] = this.vias()
+    const node = engine.findNode(via1);
+    node.pressure = this.pressure;
+    node.mass = node.pressure * node.volume;
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-5, this.y, this.x+5, this.y+18, pos);
+  }
+
+  draw(ctx) {
+    ctx.lineWidth = lineWidth;
+    this.drawPort(ctx, this.x, this.y, 0, 10, this.color);
+    ctx.beginPath();
+    ctx.moveTo(this.x,   this.y+10);
+    ctx.lineTo(this.x-6, this.y+10);
+    ctx.lineTo(this.x,   this.y+20);
+    ctx.lineTo(this.x+6, this.y+10);
+    ctx.lineTo(this.x,   this.y+10);
+    ctx.stroke();
+  }
+}
+
+
+class Cylinder1 extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Cylinder1';
+    this.shift = 0;
+    this.maxShift = 90;
+    this.color = '#000';
+    this.pressure1 = airPressure; // bar
+    this.mass1 = 0;
+    this.n = 0;
+    this.conductance = conductanceBase;
+    this.position = {min:0, max:0.20, actual:0};
+    this.volumeMin = 12; // cm3
+    this.area = 12.5;    // cm2 (40 mm normalized cylinder)
+    this.springForceMin = 6;    // kgf
+    this.springForceConst = 50; // kgf/m
+    this.massRod = 0.5; // kg
+    this.speed = 0; // cm/s
+    this.color1 = defaultColor;
+    this.color1w = '#fff';
+    this.options = {
+      massLoad: 5,
+    }
+    this.frictionStatic = 0.8 * (this.options.massLoad + this.massRod); // kgf
+    this.frictionDynamic = 0.6 * (this.options.massLoad + this.massRod); // kgf
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    return [via1];
+  }
+
+  validateOptions() {
+    this.options.massLoad = Number(this.options.massLoad);
+    if (isNaN(this.options.massLoad))
+      this.options.massLoad = 0;
+    if (this.options.massLoad > 100)
+      this.options.massLoad = 100;
+    if (this.options.massLoad < 0)
+      this.options.massLoad = 0;
+    this.frictionStatic = 0.8 * (this.options.massLoad+ this.massRod); // kgf
+    this.frictionDynamic = 0.6 * (this.options.massLoad+ this.massRod); // kgf
+  }
+
+  reset () {
+    this.position.actual = this.position.min;
+    this.pressure1 = airPressure;
+    this.mass1 = 0;
+    this.shift = 0;
+    this.color1 = defaultColor;
+    this.color1w = '#fff';
+  }
+
+  update(ctx, engine, dt) {
+    const [via1] = this.vias();
+    const node1 = engine.findNode(via1);
+
+    let volume1 = 100*this.position.actual * this.area + this.volumeMin;
+    if (this.mass1 === 0) this.mass1 = this.pressure1 * volume1;
+
+    // Compute node1 flow
+    const m1 = node1.mass;
+    const m2 = this.mass1;
+    const n1_vol = node1.volume;
+
+    let dp = m1 / n1_vol - m2 / volume1;
+    dp = Math.sign(dp) * Math.sqrt(Math.abs(dp))
+    const k1_m = dt * dp * this.conductance;
+
+    dp = (m1 - 0.5*k1_m) / n1_vol - (m2 + 0.5*k1_m) / volume1;
+    dp = Math.sign(dp) * Math.sqrt(Math.abs(dp))
+    const k2_m = dt * dp * this.conductance;
+
+    dp = (m1 - 0.5*k2_m) / n1_vol - (m2 + 0.5*k2_m) / volume1;
+    dp = Math.sign(dp) * Math.sqrt(Math.abs(dp))
+    const k3_m = dt * dp * this.conductance;
+
+    dp = (m1 - k3_m) / n1_vol - (m2 + k3_m) / volume1;
+    dp = Math.sign(dp) * Math.sqrt(Math.abs(dp))
+    const k4_m = dt * dp * this.conductance;
+
+    const dm = (k1_m + 2*k2_m + 2*k3_m + k4_m)/6;
+
+    node1.mass -= dm;
+    this.mass1 += dm;
+
+    node1.pressure = node1.mass / n1_vol;
+    this.pressure1 = this.mass1 / volume1;
+
+
+    // Compute piston movement
+    for(let i = 0; i < 10; i++) {
+      volume1 = 100*this.position.actual * this.area + this.volumeMin;
+      this.pressure1 = this.mass1 / volume1;
+      let forcePiston = (this.pressure1 - airPressure) * this.area; // kgf
+      const forceSpring = this.springForceMin + this.position.actual * this.springForceConst;
+      let netForce = forcePiston - forceSpring;
+
+      if (this.speed === 0) {
+        if (netForce > 0){
+          if (netForce > this.frictionStatic)
+            netForce -= this.frictionDynamic * Math.sign(netForce);
+          else
+            netForce = 0;
+          this.speed = 0.1 * dt * netForce * 9.8 / (this.massRod + this.options.massLoad);
+        }
+        else {
+          this.speed = 0.1 * dt * netForce * 9.8 / this.massRod;
+        }
+      }
+      else if (this.speed > 0) {
+        netForce -= this.frictionDynamic * Math.sign(this.speed);
+        const dspeed = 0.1 * dt * netForce * 9.8 / (this.massRod + this.options.massLoad);
+        if (Math.sign(dspeed) === Math.sign(this.speed) &&
+          Math.abs(dspeed) > Math.abs(this.speed)) {
+          this.speed = 0;
+        }
+        else {
+          this.speed += dspeed;
+        }
+      }
+      else {
+        this.speed += 0.1 * dt * netForce * 9.8 / this.massRod;
+      }
+
+      this.position.actual += 0.1 * dt * this.speed;
+    }
+
+    // Stop at begining and end. Shift piston image
+    if (this.position.actual < this.position.min) {
+      this.position.actual = this.position.min;
+      this.speed = 0;
+    }
+    if (this.position.actual > this.position.max) {
+      this.position.actual = this.position.max;
+      this.speed = 0;
+    }
+    this.shift = this.maxShift * (this.position.actual-this.position.min)/
+                 (this.position.max - this.position.min);
+
+    // Set colors
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color1w = this.colorPressure(node1.pressure, 1);
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-5, this.y-40, this.x+115, this.y-10, pos);
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x, this.y, 0, -10, this.color1);
+    this.drawPressure(ctx, this.x-5, this.y-40);
+    this.drawCamera(ctx, this.x-5, this.y-40, this.x+115, this.y-10);
+    this.drawPiston(ctx, this.shift);
+  }
+
+  drawPressure(ctx, posX, posY) {
+    ctx.fillStyle = this.color1w;
+    ctx.fillRect(posX, posY, 10 + this.shift, 30);
+  }
+
+  drawPiston(ctx, shift) {
+    let posX = this.x + shift;
+    this.drawRectangle(ctx, posX+5, this.y-10, posX+15, this.y-40);
+    this.drawRectangle(ctx, posX+15, this.y-20, posX+125, this.y-30);
+    this.drawRectangle(ctx, posX+125, this.y-15, posX+145, this.y-35);
+    this.drawSpring(ctx, posX+15, this.y-13, this.x+115);
+  }
+
+  drawSpring(ctx, initX, initY, endX) {
+    const step = (endX-initX)/6;
+    ctx.lineWidth = lineWidth;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(initX, initY);
+    ctx.lineTo(initX+step, initY-24);
+    ctx.lineTo(initX+step*1.3333, initY-17);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(initX+step*1.6666, initY-7);
+    ctx.lineTo(initX+step*2, initY);
+    ctx.lineTo(initX+step*3, initY-24);
+    ctx.lineTo(initX+step*3.3333, initY-17);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(initX+step*3.6666, initY-7);
+    ctx.lineTo(initX+step*4, initY);
+    ctx.lineTo(initX+step*5, initY-24);
+    ctx.lineTo(initX+step*5.3333, initY-17);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(initX+step*5.66666, initY-7);
+    ctx.lineTo(initX+step*6, initY);
+    ctx.stroke();
+
+    ctx.lineJoin = 'miter';
+  }
+}
+
+
+class Cylinder2 extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Cylinder2';
+    this.shift = 0;
+    this.maxShift = 90;
+    this.color = '#000';
+    this.conductance = conductanceBase;
+    this.pressure1 = 1; // bar
+    this.pressure2 = 1; // bar
+    this.volumeMin = 12;
+    this.area1 = 12.5; // cm2 (40 mm normalized cylinder)
+    this.area2 = 10.5; // cm2 (40 mm normalized cylinder)
+    this.mass1 = 0;
+    this.mass2 = 0;
+    this.areaRod = this.area1 - this.area2;
+    this.massRod = 0.5; // kg
+    this.position = {min:0, max:0.20, actual:0};
+    this.speed = 0; // cm/s
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color1w = '#fff';
+    this.color2w = '#fff';
+    this.options = {
+      massLoad: 5,
+    }
+    this.frictionStatic = 0.8 * (this.options.massLoad+ this.massRod); // kgf
+    this.frictionDynamic = 0.6 * (this.options.massLoad+ this.massRod); // kgf
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    const via2 = {x:this.x+110, y:this.y};
+    return [via1, via2];
+  }
+
+  validateOptions() {
+    this.options.massLoad = Number(this.options.massLoad);
+    if (isNaN(this.options.massLoad))
+      this.options.massLoad = 10;
+    if (this.options.massLoad > 100)
+      this.options.massLoad = 100;
+    if (this.options.massLoad < 0)
+      this.options.massLoad = 0;
+    this.frictionStatic = 0.8 * (this.options.massLoad+ this.massRod); // kgf
+    this.frictionDynamic = 0.6 * (this.options.massLoad+ this.massRod); // kgf
+  }
+
+  reset () {
+    this.position.actual = this.position.min;
+    this.pressure1 = airPressure;
+    this.pressure2 = airPressure;
+    this.mass1 = 0;
+    this.mass2 = 0;
+    this.shift = 0;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color1w = '#fff';
+    this.color2w = '#fff';
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+
+    // Simulation
+    let volume1 = 100*this.position.actual * this.area1 + this.volumeMin;  // cm3
+    let volume2 = 100*(this.position.max - this.position.actual) * this.area2 + this.volumeMin; //cm3
+    if (this.mass1 === 0) this.mass1 = this.pressure1 * volume1;
+    if (this.mass2 === 0) this.mass2 = this.pressure2 * volume2;
+
+    // Compute node1 flow
+    // Compute node1 mass flux
+    const m_n1 = node1.mass;
+    const m_p1 = this.mass1;
+    const n1_vol = node1.volume;
+
+    let dp = m_n1 / n1_vol - m_p1 / volume1;
+    dp = Math.sign(dp) * Math.sqrt(Math.abs(dp))
+    let k1_m = dt * dp * this.conductance;
+
+    dp = (m_n1 - 0.5*k1_m) / n1_vol - (m_p1 + 0.5*k1_m) / volume1;
+    dp = Math.sign(dp) * Math.sqrt(Math.abs(dp))
+    let k2_m = dt * dp * this.conductance;
+
+    dp = (m_n1 - 0.5*k2_m) / n1_vol - (m_p1 + 0.5*k2_m) / volume1;
+    dp = Math.sign(dp) * Math.sqrt(Math.abs(dp))
+    let k3_m = dt * dp * this.conductance;
+
+    dp = (m_n1 - k3_m) / n1_vol - (m_p1 + k3_m) / volume1;
+    dp = Math.sign(dp) * Math.sqrt(Math.abs(dp))
+    let k4_m = dt * dp * this.conductance;
+
+    let dm = (k1_m + 2*k2_m + 2*k3_m + k4_m)/6;
+
+    node1.mass -= dm;
+    this.mass1 += dm;
+
+    node1.pressure = node1.mass / n1_vol;
+    this.pressure1 = this.mass1 / volume1;
+
+    // Compute node2 flow
+    const m_n2 = node2.mass;
+    const m_p2 = this.mass2;
+    const n2_vol = node2.volume;
+
+    dp = m_n2 / n2_vol - m_p2 / volume2;
+    dp = Math.sign(dp) * Math.sqrt(Math.abs(dp))
+    k1_m = dt * dp * this.conductance;
+
+    dp = (m_n2 - 0.5*k1_m) / n2_vol - (m_p2 + 0.5*k1_m) / volume2;
+    dp = Math.sign(dp) * Math.sqrt(Math.abs(dp))
+    k2_m = dt * dp * this.conductance;
+
+    dp = (m_n2 - 0.5*k2_m) / n2_vol - (m_p2 + 0.5*k2_m) / volume2;
+    dp = Math.sign(dp) * Math.sqrt(Math.abs(dp))
+    k3_m = dt * dp * this.conductance;
+
+    dp = (m_n2 - k3_m) / n2_vol - (m_p2 + k3_m) / volume2;
+    dp = Math.sign(dp) * Math.sqrt(Math.abs(dp))
+    k4_m = dt * dp * this.conductance;
+
+    dm = (k1_m + 2*k2_m + 2*k3_m + k4_m)/6;
+
+    node2.mass -= dm;
+    this.mass2 += dm;
+
+    node2.pressure = node2.mass / n2_vol;
+    this.pressure2 = this.mass2 / volume2;
+
+    // Compute piston movement
+    for(let i = 0; i < 10; i++) {
+      let force1 = this.pressure1 * this.area1; // kgf
+      let force2 = this.pressure2 * this.area2 + airPressure * this.areaRod; // kgf
+      let netForce = force1 - force2;
+
+      if (this.speed === 0) {
+        if (Math.abs(netForce) > this.frictionStatic)
+          netForce -= this.frictionDynamic*Math.sign(netForce);
+        else
+          netForce = 0;
+        this.speed += 0.1 * dt * netForce * 9.8 / (this.massRod + this.options.massLoad);
+      }
+      else {
+        netForce -= this.frictionDynamic*Math.sign(this.speed);
+        const dspeed = 0.1 * dt * netForce * 9.8 / (this.massRod + this.options.massLoad);
+        if (Math.sign(dspeed) !== Math.sign(this.speed) &&
+          Math.abs(dspeed) > Math.abs(this.speed)) {
+          this.speed = 0;
+        }
+        else {
+          this.speed += dspeed;
+        }
+      }
+
+      this.position.actual += 0.1 * dt * this.speed;
+    }
+
+    // Stop at begining and end. Shift piston image
+    if (this.position.actual < this.position.min) {
+      this.position.actual = this.position.min;
+      this.speed = 0;
+    }
+    if (this.position.actual > this.position.max) {
+      this.position.actual = this.position.max;
+      this.speed = 0;
+    }
+    this.shift = this.maxShift * (this.position.actual-this.position.min)/
+                 (this.position.max - this.position.min);
+
+    // Set colors
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+    this.color1w = this.colorPressure(node1.pressure, 1);
+    this.color2w = this.colorPressure(node2.pressure, 1);
+  }
+
+
+  near(pos) {
+    return this.nearRect(this.x-5, this.y-40, this.x+115, this.y-10, pos);
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x, this.y, 0, -10, this.color1);
+    this.drawPort(ctx, this.x+110, this.y, 0, -10, this.color2);
+    this.drawPressure1(ctx);
+    this.drawPressure2(ctx);
+    this.drawCamera(ctx, this.x-5, this.y-40, this.x+115, this.y-10);
+    this.drawPiston(ctx, this.shift);
+  }
+
+  drawPressure1(ctx) {
+    ctx.fillStyle = this.color1w;
+    ctx.fillRect(this.x-5, this.y-40, 10 + this.shift, 30);
+  }
+
+  drawPressure2(ctx) {
+    ctx.fillStyle = this.color2w;
+    ctx.fillRect(this.x+15+this.shift, this.y-40, 100-this.shift, 10);
+    ctx.fillRect(this.x+15+this.shift, this.y-20, 100-this.shift, 10);
+  }
+
+  drawPiston(ctx, shift) {
+    let posX = this.x + shift;
+    this.drawRectangle(ctx, posX+5, this.y-10, posX+15, this.y-40);
+    this.drawRectangle(ctx, posX+15, this.y-20, posX+125, this.y-30);
+    this.drawRectangle(ctx, posX+125, this.y-15, posX+145, this.y-35);
+  }
+}
+
+
+class Valve22m extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Valve22m';
+    this.shift = {
+      min: 0,
+      max: 30,
+      pos: 0,
+      speed: 250,
+    };
+    this.conductance = conductanceBase;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.options = {
+      flipped: false,
+    };
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    const via2 = {x:this.x, y:this.y-50};
+    return [via1, via2];
+  }
+
+  reset () {
+    this.shift.pos = this.shift.min;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+  }
+
+  flip() {
+    if (this.options.flipped) this.options.flipped = false;
+    else this.options.flipped = true;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+
+    if (this.options.flipped) {
+      if (this.shift.pos === this.shift.min) {
+        this.computeFlow(node1, node2, this.conductance, dt);
+      }
+    }
+    else {
+      if (this.shift.pos === this.shift.max) {
+        this.computeFlow(node1, node2, this.conductance, dt);
+      }
+    }
+
+    if (this.active) {
+       if (this.shift.pos < this.shift.max)
+         this.shift.pos += dt * this.shift.speed;
+       if (this.shift.pos > this.shift.max)
+         this.shift.pos = this.shift.max;
+    }
+    else {
+       if (this.shift.pos > this.shift.min)
+         this.shift.pos -= dt * this.shift.speed;
+       if (this.shift.pos < this.shift.min)
+         this.shift.pos = this.shift.min;
+    }
+
+    // Set colors
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-45+this.shift.pos, this.y-40,
+                         this.x+15+this.shift.pos, this.y-10, pos);
+  }
+
+  nearPushButton(pos) {
+    if (this.nearRect(this.x-65+this.shift.pos, this.y-35,
+                      this.x-45+this.shift.pos, this.y-15, pos))
+      return true;
+    if (activateValvesTouchingBody)
+      return this.near(pos);
+    return false;
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x, this.y, 0, -10, this.color1);
+    this.drawPort(ctx, this.x, this.y-50, 0, 10, this.color2);
+    this.drawBody(ctx, this.shift.pos);
+  }
+
+  drawBody(ctx, shift) {
+    let posX = this.x + shift;
+
+    if (this.options.flipped) {
+      if (shift === this.shift.min) {
+        this.drawTap(ctx, posX-30, this.y-10, posX-30, this.y-20);
+        this.drawTap(ctx, posX-30, this.y-40, posX-30, this.y-30);
+        this.drawArrow(ctx, posX, this.y-10, posX, this.y-40+lineWidth, this.color1);
+      }
+      else {
+        this.drawArrow(ctx, posX, this.y-10, posX, this.y-40+lineWidth);
+        this.drawTap(ctx, posX-30, this.y-10, posX-30, this.y-20, this.color1);
+        this.drawTap(ctx, posX-30, this.y-40, posX-30, this.y-30, this.color2);
+      }
+    }
+    else {
+      if (shift === this.shift.min) {
+        this.drawTap(ctx, posX, this.y-10, posX, this.y-20, this.color1);
+        this.drawTap(ctx, posX, this.y-40, posX, this.y-30, this.color2);
+        this.drawArrow(ctx, posX-30, this.y-10, posX-30, this.y-40+lineWidth);
+      }
+      else {
+        this.drawArrow(ctx, posX-30, this.y-10, posX-30, this.y-40+lineWidth, this.color1);
+        this.drawTap(ctx, posX, this.y-10, posX, this.y-20);
+        this.drawTap(ctx, posX, this.y-40, posX, this.y-30);
+      }
+    }
+
+    this.drawRectangle(ctx, posX-45, this.y-10, posX-15, this.y-40);
+    this.drawRectangle(ctx, posX-15, this.y-10, posX+15, this.y-40);
+    this.drawSpring(ctx, posX+15, this.y-20);
+    this.drawPushLever(ctx, posX-45, this.y-20);
+  }
+}
+
+
+class Valve32b extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Valve32b';
+    this.shift = {
+      min: 0,
+      max: 40,
+      pos: 0,
+      speed: 250,
+    };
+    this.conductance = conductanceBase;
+    this.active = false;
+    this.timeActive = 0;
+    this.maxTimeActive = 200;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.options = {
+      flipped: false,
+    };
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    const via2 = {x:this.x, y:this.y-50};
+    const via3 = {x:this.x+20, y:this.y};
+    return [via1, via2, via3];
+  }
+
+  reset () {
+    this.shift.pos = this.shift.min;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+  }
+
+  flip() {
+    if (this.options.flipped) this.options.flipped = false;
+    else this.options.flipped = true;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2, via3] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    const node3 = engine.findNode(via3);
+
+
+    if (this.shift.pos === this.shift.max) {
+      this.timeActive += dt*1000;
+      if (this.timeActive > this.maxTimeActive) {
+        this.active = false;
+      }
+    }
+    if (this.shift.pos === this.shift.min) {
+      this.timeActive = 0;
+    }
+
+    if (this.options.flipped) {
+      if (this.shift.pos === this.shift.min) {
+        this.computeFlow(node1, node2, this.conductance, dt);
+      }
+      if (this.shift.pos === this.shift.max) {
+        this.computeFlow(node2, node3, this.conductance, dt);
+      }
+    }
+    else {
+      if (this.shift.pos === this.shift.min) {
+        this.computeFlow(node2, node3, this.conductance, dt);
+      }
+      if (this.shift.pos === this.shift.max) {
+        this.computeFlow(node1, node2, this.conductance, dt);
+      }
+    }
+
+    // Move the valve body
+    if (this.active) {
+       if (this.shift.pos < this.shift.max)
+         this.shift.pos += dt * this.shift.speed;
+       if (this.shift.pos > this.shift.max)
+         this.shift.pos = this.shift.max;
+    }
+    else {
+       if (this.shift.pos > this.shift.min)
+         this.shift.pos -= dt * this.shift.speed;
+       if (this.shift.pos < this.shift.min)
+         this.shift.pos = this.shift.min;
+    }
+
+    // Set colors
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+    this.color3 = this.colorPressure(node3.pressure);
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-50+this.shift.pos, this.y-40,
+                         this.x+30+this.shift.pos, this.y-10, pos);
+  }
+
+  nearPushButton(pos) {
+    if (this.nearRect(this.x-70+this.shift.pos, this.y-35,
+                      this.x-50+this.shift.pos, this.y-15, pos))
+      return true;
+    if (activateValvesTouchingBody)
+      return this.near(pos);
+    return false;
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x, this.y, 0, -10, this.color1);
+    this.drawPort(ctx, this.x, this.y-50, 0, 10, this.color2);
+    this.drawPort(ctx, this.x+20, this.y, 0, -10, this.color3);
+    this.drawBody(ctx, this.shift.pos);
+  }
+
+  drawBody(ctx, shift) {
+    let posX = this.x + shift;
+
+    if (this.options.flipped) {
+      if (shift === this.shift.min) {
+        this.drawArrow(ctx, posX, this.y-10, posX, this.y-40+lineWidth, this.color1);
+        this.drawTap(ctx, posX+20, this.y-10, posX+20, this.y-20, this.color3);
+
+        this.drawArrow(ctx, posX-40, this.y-40, posX-20, this.y-10-lineWidth);
+        this.drawTap(ctx, posX-40, this.y-10, posX-40, this.y-20);
+      }
+      else {
+        this.drawArrow(ctx, posX, this.y-10, posX, this.y-40+lineWidth);
+        this.drawTap(ctx, posX+20, this.y-10, posX+20, this.y-20);
+
+        this.drawArrow(ctx, posX-40, this.y-40, posX-20, this.y-10-lineWidth, this.color3);
+        this.drawTap(ctx, posX-40, this.y-10, posX-40, this.y-20, this.color1);
+      }
+    }
+    else {
+      if (shift === this.shift.min) {
+        this.drawArrow(ctx, posX, this.y-40, posX+20, this.y-10-lineWidth, this.color2);
+        this.drawTap(ctx, posX, this.y-10, posX, this.y-20, this.color1);
+
+        this.drawArrow(ctx, posX-40, this.y-10, posX-40, this.y-40+lineWidth);
+        this.drawTap(ctx, posX-20, this.y-10, posX-20, this.y-20);
+      }
+      else {
+        this.drawArrow(ctx, posX, this.y-40, posX+20, this.y-10-lineWidth);
+        this.drawTap(ctx, posX, this.y-10, posX, this.y-20);
+
+        this.drawArrow(ctx, posX-40, this.y-10, posX-40, this.y-40+lineWidth, this.color1);
+        this.drawTap(ctx, posX-20, this.y-10, posX-20, this.y-20, this.color3);
+      }
+    }
+
+    this.drawRectangle(ctx, posX-10, this.y-10, posX+30, this.y-40);
+    this.drawRectangle(ctx, posX-50, this.y-10, posX-10, this.y-40);
+    this.drawSpring(ctx, posX+30, this.y-20);
+    this.drawPushButton(ctx, posX-50, this.y-20);
+  }
+}
+
+
+class Valve32m extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Valve32m';
+    this.shift = {
+      min: 0,
+      max: 40,
+      pos: 0,
+      speed: 250,
+    };
+    this.conductance = conductanceBase;
+    this.active = false;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.options = {
+      flipped: false,
+    };
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    const via2 = {x:this.x, y:this.y-50};
+    const via3 = {x:this.x+20, y:this.y};
+    return [via1, via2, via3];
+  }
+
+  reset () {
+    this.shift.pos = this.shift.min;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+  }
+
+  flip() {
+    if (this.options.flipped) this.options.flipped = false;
+    else this.options.flipped = true;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2, via3] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    const node3 = engine.findNode(via3);
+
+    if (this.options.flipped) {
+      if (this.shift.pos === this.shift.min) {
+        this.computeFlow(node1, node2, this.conductance, dt);
+      }
+      if (this.shift.pos === this.shift.max) {
+        this.computeFlow(node2, node3, this.conductance, dt);
+      }
+    }
+    else {
+      if (this.shift.pos === this.shift.min) {
+        this.computeFlow(node2, node3, this.conductance, dt);
+      }
+      if (this.shift.pos === this.shift.max) {
+        this.computeFlow(node1, node2, this.conductance, dt);
+      }
+    }
+
+    // Move the valve body
+    if (this.active) {
+       if (this.shift.pos < this.shift.max)
+         this.shift.pos += dt * this.shift.speed;
+       if (this.shift.pos > this.shift.max)
+         this.shift.pos = this.shift.max;
+    }
+    else {
+       if (this.shift.pos > this.shift.min)
+         this.shift.pos -= dt * this.shift.speed;
+       if (this.shift.pos < this.shift.min)
+         this.shift.pos = this.shift.min;
+    }
+
+    // Set colors
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+    this.color3 = this.colorPressure(node3.pressure);
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-50+this.shift.pos, this.y-40,
+                         this.x+30+this.shift.pos, this.y-10, pos);
+  }
+
+  nearPushButton(pos) {
+    if (this.nearRect(this.x-70+this.shift.pos, this.y-35,
+                      this.x-50+this.shift.pos, this.y-15, pos))
+      return true;
+    if (activateValvesTouchingBody)
+      return this.near(pos);
+    return false;
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x, this.y, 0, -10, this.color1);
+    this.drawPort(ctx, this.x, this.y-50, 0, 10, this.color2);
+    this.drawPort(ctx, this.x+20, this.y, 0, -10, this.color3);
+    this.drawBody(ctx, this.shift.pos);
+  }
+
+  drawBody(ctx, shift) {
+    let posX = this.x + shift;
+
+    if (this.options.flipped) {
+      if (shift === this.shift.min) {
+        this.drawArrow(ctx, posX, this.y-10, posX, this.y-40+lineWidth, this.color1);
+        this.drawTap(ctx, posX+20, this.y-10, posX+20, this.y-20, this.color3);
+
+        this.drawArrow(ctx, posX-40, this.y-40, posX-20, this.y-10-lineWidth);
+        this.drawTap(ctx, posX-40, this.y-10, posX-40, this.y-20);
+      }
+      else {
+        this.drawArrow(ctx, posX, this.y-10, posX, this.y-40+lineWidth);
+        this.drawTap(ctx, posX+20, this.y-10, posX+20, this.y-20);
+
+        this.drawArrow(ctx, posX-40, this.y-40, posX-20, this.y-10-lineWidth, this.color3);
+        this.drawTap(ctx, posX-40, this.y-10, posX-40, this.y-20, this.color1);
+      }
+    }
+    else {
+      if (shift === this.shift.min) {
+        this.drawArrow(ctx, posX, this.y-40, posX+20, this.y-10-lineWidth, this.color2);
+        this.drawTap(ctx, posX, this.y-10, posX, this.y-20, this.color1);
+
+        this.drawArrow(ctx, posX-40, this.y-10, posX-40, this.y-40+lineWidth);
+        this.drawTap(ctx, posX-20, this.y-10, posX-20, this.y-20);
+      }
+      else {
+        this.drawArrow(ctx, posX, this.y-40, posX+20, this.y-10-lineWidth);
+        this.drawTap(ctx, posX, this.y-10, posX, this.y-20);
+
+        this.drawArrow(ctx, posX-40, this.y-10, posX-40, this.y-40+lineWidth, this.color1);
+        this.drawTap(ctx, posX-20, this.y-10, posX-20, this.y-20, this.color3);
+      }
+    }
+
+    this.drawRectangle(ctx, posX-10, this.y-10, posX+30, this.y-40);
+    this.drawRectangle(ctx, posX-50, this.y-10, posX-10, this.y-40);
+    this.drawSpring(ctx, posX+30, this.y-20);
+    this.drawPushLever(ctx, posX-50, this.y-20);
+  }
+}
+
+
+class Valve32r extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Valve32r';
+    this.shift = {
+      min: 0,
+      max: 40,
+      pos: 0,
+      speed: 250,
+    };
+    this.conductance = conductanceBase;
+    this.active = false;
+    this.color = '#000';
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.options = {
+      flipped: false,
+      reference: '1.2',
+    };
+  }
+
+  validateOptions() {
+    if (this.options.reference.length > 3)
+      this.options.reference = this.options.reference.slice(0, 3);
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    const via2 = {x:this.x, y:this.y-50};
+    const via3 = {x:this.x+20, y:this.y};
+    return [via1, via2, via3];
+  }
+
+  reset () {
+    this.shift.pos = this.shift.min;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+  }
+
+  flip() {
+    if (this.options.flipped) this.options.flipped = false;
+    else this.options.flipped = true;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2, via3] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    const node3 = engine.findNode(via3);
+
+    if (this.options.flipped) {
+      if (this.shift.pos === this.shift.min) {
+        this.computeFlow(node1, node2, this.conductance, dt);
+      }
+      if (this.shift.pos === this.shift.max) {
+        this.computeFlow(node2, node3, this.conductance, dt);
+      }
+    }
+    else {
+      if (this.shift.pos === this.shift.min) {
+        this.computeFlow(node2, node3, this.conductance, dt);
+      }
+      if (this.shift.pos === this.shift.max) {
+        this.computeFlow(node1, node2, this.conductance, dt);
+      }
+    }
+
+    // Move the valve body
+    if (this.active) {
+       if (this.shift.pos < this.shift.max)
+         this.shift.pos += dt * this.shift.speed;
+       if (this.shift.pos > this.shift.max)
+         this.shift.pos = this.shift.max;
+    }
+    else {
+       if (this.shift.pos > this.shift.min)
+         this.shift.pos -= dt * this.shift.speed;
+       if (this.shift.pos < this.shift.min)
+         this.shift.pos = this.shift.min;
+    }
+
+    // Set colors
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+    this.color3 = this.colorPressure(node3.pressure);
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-50+this.shift.pos, this.y-40,
+                         this.x+30+this.shift.pos, this.y-10, pos);
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x, this.y, 0, -10, this.color1);
+    this.drawPort(ctx, this.x, this.y-50, 0, 10, this.color2);
+    this.drawPort(ctx, this.x+20, this.y, 0, -10, this.color3);
+    this.drawBody(ctx, this.shift.pos);
+  }
+
+  drawBody(ctx, shift) {
+    let posX = this.x + shift;
+
+    if (this.options.flipped) {
+      if (shift === this.shift.min) {
+        this.drawArrow(ctx, posX, this.y-10, posX, this.y-40+lineWidth, this.color1);
+        this.drawTap(ctx, posX+20, this.y-10, posX+20, this.y-20, this.color3);
+
+        this.drawArrow(ctx, posX-40, this.y-40, posX-20, this.y-10-lineWidth);
+        this.drawTap(ctx, posX-40, this.y-10, posX-40, this.y-20);
+      }
+      else {
+        this.drawArrow(ctx, posX, this.y-10, posX, this.y-40+lineWidth);
+        this.drawTap(ctx, posX+20, this.y-10, posX+20, this.y-20);
+
+        this.drawArrow(ctx, posX-40, this.y-40, posX-20, this.y-10-lineWidth, this.color3);
+        this.drawTap(ctx, posX-40, this.y-10, posX-40, this.y-20, this.color1);
+      }
+    }
+    else {
+      if (shift === this.shift.min) {
+        this.drawArrow(ctx, posX, this.y-40, posX+20, this.y-10-lineWidth, this.color2);
+        this.drawTap(ctx, posX, this.y-10, posX, this.y-20, this.color1);
+
+        this.drawArrow(ctx, posX-40, this.y-10, posX-40, this.y-40+lineWidth);
+        this.drawTap(ctx, posX-20, this.y-10, posX-20, this.y-20);
+      }
+      else {
+        this.drawArrow(ctx, posX, this.y-40, posX+20, this.y-10-lineWidth);
+        this.drawTap(ctx, posX, this.y-10, posX, this.y-20);
+
+        this.drawArrow(ctx, posX-40, this.y-10, posX-40, this.y-40+lineWidth, this.color1);
+        this.drawTap(ctx, posX-20, this.y-10, posX-20, this.y-20, this.color3);
+      }
+    }
+
+    this.drawRectangle(ctx, posX-10, this.y-10, posX+30, this.y-40);
+    this.drawRectangle(ctx, posX-50, this.y-10, posX-10, this.y-40);
+    this.drawSpring(ctx, posX+30, this.y-20);
+    this.drawPushRoller(ctx, posX-50, this.y-25);
+
+    ctx.font = textFont;
+    ctx.fillStyle = (this.selected) ? selectedColor : this.color;
+    ctx.textAlign = "center";
+    ctx.fillText(this.options.reference, posX-66, this.y-35);
+    ctx.textAlign = "start";
+  }
+}
+
+
+class Roller extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Roller';
+    this.shift = 0;
+    this.maxShift = 5;
+    this.color = '#000';
+    this.touching = false;
+    this.options = {
+      reference: '1.2',
+    }
+  }
+
+  validateOptions() {
+    if (this.options.reference.length > 3)
+      this.options.reference = this.options.reference.slice(0, 3);
+  }
+
+  vias() {
+    return [];
+  }
+
+  reset () {
+    this.shift = 0;
+  }
+
+  update(ctx, engine, dt) {
+    this.shift = 0;
+    for (const comp of engine.components) {
+      if (['Cylinder1', 'Cylinder2'].includes(comp.type)) {
+        if (this.nearCylinder(comp)) {
+          this.shift = this.maxShift;
+          break;
+        }
+      }
+    }
+    for (const comp of engine.components) {
+      if (['Valve32r'].includes(comp.type)) {
+        if (this.options.reference === comp.options.reference) {
+          if (this.shift === 0)
+            comp.active = false;
+          else
+            comp.active = true;
+        }
+      }
+    }
+  }
+
+  nearCylinder(cyl) {
+    if (cyl.y-35 < this.y + 6 && cyl.y-15 > this.y + 6) {
+      if (cyl.x+cyl.shift+120 < this.x && cyl.x+cyl.shift+145 > this.x) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-15, this.y-40, this.x+15, this.y, pos);
+  }
+
+  draw(ctx) {
+    ctx.lineWidth = lineWidth;
+    this.drawRectangle(ctx, this.x-15, this.y-35, this.x+15, this.y-15);
+
+    ctx.font = textFont;
+    ctx.fillStyle = (this.selected) ? selectedColor : this.color;
+    ctx.textAlign = "center";
+    ctx.fillText(this.options.reference, this.x, this.y-20);
+    ctx.textAlign = "start";
+
+    let posY = this.y - this.shift;
+    ctx.beginPath();
+    ctx.moveTo(this.x-4, posY-4);
+    ctx.lineTo(this.x-4, this.y-15);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(this.x+4, posY-4);
+    ctx.lineTo(this.x+4, this.y-15);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(this.x, posY, 6, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(this.x, posY, 1, 0, Math.PI*2);
+    ctx.stroke();
+  }
+}
+
+
+class Valve32p extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Valve32p';
+    this.shift = {
+      min: 0,
+      max: 40,
+      pos: 0,
+      speed: 250,
+    };
+    this.conductance = conductanceBase;
+    this.active = false;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.color4 = defaultColor;
+    this.color5 = defaultColor;
+    this.options = {
+      flipped: false,
+    };
+  }
+
+  flip() {
+    if (this.options.flipped) this.options.flipped = false;
+    else this.options.flipped = true;
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    const via2 = {x:this.x, y:this.y-50};
+    const via3 = {x:this.x+20, y:this.y};
+    const via4 = {x:this.x-70, y:this.y-20};
+    const via5 = {x:this.x+90, y:this.y-20};
+    return [via1, via2, via3, via4, via5];
+  }
+
+  reset () {
+    this.shift.pos = this.shift.min;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.color4 = defaultColor;
+    this.color5 = defaultColor;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2, via3, via4, via5] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    const node3 = engine.findNode(via3);
+    const node4 = engine.findNode(via4);
+    const node5 = engine.findNode(via5);
+
+    if (this.active && node5.pressure > node4.pressure + 0.1) {
+       this.active = false;
+    }
+    if (!this.active && node4.pressure > node5.pressure + 0.1) {
+       this.active = true;
+    }
+
+    if (this.options.flipped) {
+      if (this.shift.pos === this.shift.min) {
+        this.computeFlow(node1, node2, this.conductance, dt);
+      }
+      if (this.shift.pos === this.shift.max) {
+        this.computeFlow(node2, node3, this.conductance, dt);
+      }
+    }
+    else {
+      if (this.shift.pos === this.shift.min) {
+        this.computeFlow(node2, node3, this.conductance, dt);
+      }
+      if (this.shift.pos === this.shift.max) {
+        this.computeFlow(node1, node2, this.conductance, dt);
+      }
+    }
+
+    // Move the valve body
+    if (this.active) {
+       if (this.shift.pos < this.shift.max)
+         this.shift.pos += dt * this.shift.speed;
+       if (this.shift.pos > this.shift.max)
+         this.shift.pos = this.shift.max;
+    }
+    else {
+       if (this.shift.pos > this.shift.min)
+         this.shift.pos -= dt * this.shift.speed;
+       if (this.shift.pos < this.shift.min)
+         this.shift.pos = this.shift.min;
+    }
+
+    // Set colors
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+    this.color3 = this.colorPressure(node3.pressure);
+    this.color4 = this.colorPressure(node4.pressure);
+    this.color5 = this.colorPressure(node5.pressure);
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-50+this.shift.pos, this.y-40,
+                         this.x+30+this.shift.pos, this.y-10, pos);
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x, this.y, 0, -10, this.color1);
+    this.drawPort(ctx, this.x, this.y-50, 0, 10, this.color2);
+    this.drawPort(ctx, this.x+20, this.y, 0, -10, this.color3);
+    this.drawPort(ctx, this.x-70, this.y-20, 5, 0, this.color4);
+    this.drawPort(ctx, this.x+90, this.y-20, -5, 0, this.color5);
+    this.drawBody(ctx, this.shift.pos);
+  }
+
+  drawBody(ctx, shift) {
+    let posX = this.x + shift;
+
+    if (this.options.flipped) {
+      if (shift === this.shift.min) {
+        this.drawArrow(ctx, posX, this.y-10, posX, this.y-40+lineWidth, this.color1);
+        this.drawTap(ctx, posX+20, this.y-10, posX+20, this.y-20, this.color3);
+
+        this.drawArrow(ctx, posX-40, this.y-40, posX-20, this.y-10-lineWidth);
+        this.drawTap(ctx, posX-40, this.y-10, posX-40, this.y-20);
+      }
+      else {
+        this.drawArrow(ctx, posX, this.y-10, posX, this.y-40+lineWidth);
+        this.drawTap(ctx, posX+20, this.y-10, posX+20, this.y-20);
+
+        this.drawArrow(ctx, posX-40, this.y-40, posX-20, this.y-10-lineWidth, this.color3);
+        this.drawTap(ctx, posX-40, this.y-10, posX-40, this.y-20, this.color1);
+      }
+      this.drawPneuLeftPilot(ctx, posX-20, -65, this.color4);
+      this.drawPneuRightPilot(ctx, posX, 85, this.color5);
+
+    }
+    else {
+      if (shift === this.shift.min) {
+        this.drawArrow(ctx, posX, this.y-40, posX+20, this.y-10-lineWidth, this.color2);
+        this.drawTap(ctx, posX, this.y-10, posX, this.y-20, this.color1);
+
+        this.drawArrow(ctx, posX-40, this.y-10, posX-40, this.y-40+lineWidth);
+        this.drawTap(ctx, posX-20, this.y-10, posX-20, this.y-20);
+      }
+      else {
+        this.drawArrow(ctx, posX, this.y-40, posX+20, this.y-10-lineWidth);
+        this.drawTap(ctx, posX, this.y-10, posX, this.y-20);
+
+        this.drawArrow(ctx, posX-40, this.y-10, posX-40, this.y-40+lineWidth, this.color1);
+        this.drawTap(ctx, posX-20, this.y-10, posX-20, this.y-20, this.color3);
+      }
+      this.drawPneuLeftPilot(ctx, posX-20, -65, this.color4);
+      this.drawPneuRightPilot(ctx, posX, 85, this.color5);
+    }
+
+    this.drawRectangle(ctx, posX-10, this.y-10, posX+30, this.y-40);
+    this.drawRectangle(ctx, posX-50, this.y-10, posX-10, this.y-40);
+  }
+}
+
+
+class Valve42m extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Valve42m';
+    this.shift = {
+      min: 0,
+      max: 40,
+      pos: 0,
+      speed: 350,
+    };
+    this.conductance = conductanceBase;
+    this.active = false;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.color4 = defaultColor;
+  }
+
+  vias() {
+    const via1 = {x:this.x,    y:this.y};
+    const via2 = {x:this.x+20, y:this.y};
+    const via3 = {x:this.x,    y:this.y-50};
+    const via4 = {x:this.x+20, y:this.y-50};
+    return [via1, via2, via3, via4];
+  }
+
+  reset () {
+    this.shift.pos = this.shift.min;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.color4 = defaultColor;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2, via3, via4] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    const node3 = engine.findNode(via3);
+    const node4 = engine.findNode(via4);
+    if (this.shift.pos === this.shift.min) {
+      this.computeFlow(node1, node4, this.conductance, dt);
+      this.computeFlow(node2, node3, this.conductance, dt);
+    }
+    if (this.shift.pos === this.shift.max) {
+      this.computeFlow(node1, node3, this.conductance, dt);
+      this.computeFlow(node2, node4, this.conductance, dt);
+    }
+    if (this.active) {
+       if (this.shift.pos < this.shift.max)
+         this.shift.pos += dt * this.shift.speed;
+       if (this.shift.pos > this.shift.max)
+         this.shift.pos = this.shift.max;
+    }
+    else {
+       if (this.shift.pos > this.shift.min)
+         this.shift.pos -= dt * this.shift.speed;
+       if (this.shift.pos < this.shift.min)
+         this.shift.pos = this.shift.min;
+    }
+
+    // Set colors
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+    this.color3 = this.colorPressure(node3.pressure);
+    this.color4 = this.colorPressure(node4.pressure);
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-50 + this.shift.pos, this.y-40,
+                         this.x+30 + this.shift.pos, this.y-10, pos);
+  }
+
+  nearPushButton(pos) {
+    if (this.nearRect(this.x-70 + this.shift.pos, this.y-35,
+                      this.x-50 + this.shift.pos, this.y-15, pos))
+      return true;
+    if (activateValvesTouchingBody)
+      return this.near(pos);
+    return false;
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x,    this.y,    0, -10, this.color1);
+    this.drawPort(ctx, this.x+20, this.y,    0, -10, this.color2);
+    this.drawPort(ctx, this.x,    this.y-50, 0,  10, this.color3);
+    this.drawPort(ctx, this.x+20, this.y-50, 0,  10, this.color4);
+    this.drawBody(ctx, this.shift.pos);
+  }
+
+  drawBody(ctx, shift) {
+    let posX = this.x + shift;
+
+    if (shift === this.shift.min) {
+      this.drawArrow(ctx, posX, this.y-10, posX+20, this.y-40+lineWidth, this.color1);
+      this.drawArrow(ctx, posX, this.y-40, posX+20, this.y-10-lineWidth, this.color3);
+      posX -= 40;
+      this.drawArrow(ctx, posX,    this.y-10, posX,    this.y-40+lineWidth);
+      this.drawArrow(ctx, posX+20, this.y-40, posX+20, this.y-10-lineWidth);
+      posX += 40;
+    }
+    else {
+      this.drawArrow(ctx, posX, this.y-10, posX+20, this.y-40+lineWidth);
+      this.drawArrow(ctx, posX, this.y-40, posX+20, this.y-10-lineWidth);
+      posX -= 40;
+      this.drawArrow(ctx, posX,    this.y-10, posX,    this.y-40+lineWidth, this.color1);
+      this.drawArrow(ctx, posX+20, this.y-40, posX+20, this.y-10-lineWidth, this.color4);
+      posX += 40;
+    }
+
+    this.drawRectangle(ctx, posX-10, this.y-40, posX+30, this.y-10);
+    this.drawSpring(ctx, posX+30, this.y-20);
+    posX -= 40;
+    this.drawRectangle(ctx, posX-10, this.y-40, posX+30, this.y-10);
+    this.drawPushLever(ctx, posX-10, this.y-20);
+  }
+}
+
+
+class Valve52m extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Valve52m';
+    this.shift = {
+      min: 0,
+      max: 60,
+      pos: 0,
+      speed: 350,
+    };
+    this.conductance = conductanceBase;
+    this.active = false;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.color4 = defaultColor;
+    this.color5 = defaultColor;
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    const via2 = {x:this.x-20, y:this.y};
+    const via3 = {x:this.x+20, y:this.y};
+    const via4 = {x:this.x-20, y:this.y-50};
+    const via5 = {x:this.x+20, y:this.y-50};
+    return [via1, via2, via3, via4, via5];
+  }
+
+  reset () {
+    this.shift.pos = this.shift.min;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.color4 = defaultColor;
+    this.color5 = defaultColor;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2, via3, via4, via5] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    const node3 = engine.findNode(via3);
+    const node4 = engine.findNode(via4);
+    const node5 = engine.findNode(via5);
+    if (this.shift.pos === this.shift.min) {
+      this.computeFlow(node1, node5, this.conductance, dt);
+      this.computeFlow(node4, node2, this.conductance, dt);
+    }
+    if (this.shift.pos === this.shift.max) {
+      this.computeFlow(node1, node4, this.conductance, dt);
+      this.computeFlow(node5, node3, this.conductance, dt);
+    }
+    if (this.active) {
+       if (this.shift.pos < this.shift.max)
+         this.shift.pos += dt * this.shift.speed;
+       if (this.shift.pos > this.shift.max)
+         this.shift.pos = this.shift.max;
+    }
+    else {
+       if (this.shift.pos > this.shift.min)
+         this.shift.pos -= dt * this.shift.speed;
+       if (this.shift.pos < this.shift.min)
+         this.shift.pos = this.shift.min;
+    }
+
+    // Set colors
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+    this.color3 = this.colorPressure(node3.pressure);
+    this.color4 = this.colorPressure(node4.pressure);
+    this.color5 = this.colorPressure(node5.pressure);
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-90+this.shift.pos, this.y-40,
+                         this.x+30+this.shift.pos, this.y-10, pos);
+  }
+
+  nearPushButton(pos) {
+    if (this.nearRect(this.x-110+this.shift.pos, this.y-35,
+                      this.x-90+this.shift.pos, this.y-15, pos))
+      return true;
+    if (activateValvesTouchingBody)
+      return this.near(pos);
+    return false;
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x, this.y, 0, -10, this.color1);
+    this.drawPort(ctx, this.x-20, this.y, 0, -10, this.color2);
+    this.drawPort(ctx, this.x+20, this.y, 0, -10, this.color3);
+    this.drawPort(ctx, this.x-20, this.y-50, 0, 10, this.color4);
+    this.drawPort(ctx, this.x+20, this.y-50, 0, 10, this.color5);
+    this.drawBody(ctx, this.shift.pos);
+  }
+
+  drawBody(ctx, shift) {
+    let posX = this.x + shift;
+
+    if (shift === this.shift.min) {
+      this.drawArrow(ctx, posX, this.y-10, posX+20, this.y-40+lineWidth, this.color1);
+      this.drawArrow(ctx, posX-20, this.y-40, posX-20, this.y-10-lineWidth, this.color4);
+      this.drawTap(ctx, posX+20, this.y-10, posX+20, this.y-20, this.color3);
+      posX -= 60;
+      this.drawArrow(ctx, posX, this.y-10, posX-20, this.y-40+lineWidth);
+      this.drawArrow(ctx, posX+20, this.y-40, posX+20, this.y-10-lineWidth);
+      this.drawTap(ctx, posX-20, this.y-10, posX-20, this.y-20);
+      posX += 60;
+    }
+    else {
+      this.drawArrow(ctx, posX, this.y-10, posX+20, this.y-40+lineWidth);
+      this.drawArrow(ctx, posX-20, this.y-40, posX-20, this.y-10-lineWidth);
+      this.drawTap(ctx, posX+20, this.y-10, posX+20, this.y-20);
+      posX -= 60;
+      this.drawArrow(ctx, posX, this.y-10, posX-20, this.y-40+lineWidth, this.color1);
+      this.drawArrow(ctx, posX+20, this.y-40, posX+20, this.y-10-lineWidth, this.color5);
+      this.drawTap(ctx, posX-20, this.y-10, posX-20, this.y-20, this.color2);
+      posX += 60;
+    }
+
+    this.drawRectangle(ctx, posX-30, this.y-40, posX+30, this.y-10);
+    this.drawSpring(ctx, posX+30, this.y-20);
+    posX -= 60;
+    this.drawRectangle(ctx, posX-30, this.y-40, posX+30, this.y-10);
+    this.drawPushLever(ctx, posX-30, this.y-20);
+  }
+}
+
+
+class Valve52p extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Valve52p';
+    this.shift = {
+      min: 0,
+      max: 60,
+      pos: 0,
+      speed: 350,
+    };
+    this.conductance = conductanceBase;
+    this.active = false;
+    this.color = '#000';
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.color4 = defaultColor;
+    this.color5 = defaultColor;
+    this.color6 = defaultColor;
+    this.color7 = defaultColor;
+  }
+
+  vias() {
+    const via1 = {x:this.x, y:this.y};
+    const via2 = {x:this.x-20, y:this.y};
+    const via3 = {x:this.x+20, y:this.y};
+    const via4 = {x:this.x-20, y:this.y-50};
+    const via5 = {x:this.x+20, y:this.y-50};
+    const via6 = {x:this.x-110, y:this.y-20};
+    const via7 = {x:this.x+110, y:this.y-20};
+    return [via1, via2, via3, via4, via5, via6, via7];
+  }
+
+  reset () {
+    this.shift.pos = this.shift.min;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.color4 = defaultColor;
+    this.color5 = defaultColor;
+    this.color6 = defaultColor;
+    this.color7 = defaultColor;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2, via3, via4, via5, via6, via7] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    const node3 = engine.findNode(via3);
+    const node4 = engine.findNode(via4);
+    const node5 = engine.findNode(via5);
+    const node6 = engine.findNode(via6);
+    const node7 = engine.findNode(via7);
+
+    if (this.active && node7.pressure > node6.pressure + 0.1) {
+       this.active = false;
+    }
+    if (!this.active && node6.pressure > node7.pressure + 0.1) {
+       this.active = true;
+    }
+
+    if (this.shift.pos === this.shift.min) {
+      this.computeFlow(node1, node5, this.conductance, dt);
+      this.computeFlow(node4, node2, this.conductance, dt);
+    }
+    if (this.shift.pos === this.shift.max) {
+      this.computeFlow(node1, node4, this.conductance, dt);
+      this.computeFlow(node5, node3, this.conductance, dt);
+    }
+    if (this.active) {
+       if (this.shift.pos < this.shift.max)
+         this.shift.pos += dt * this.shift.speed;
+       if (this.shift.pos > this.shift.max)
+         this.shift.pos = this.shift.max;
+    }
+    else {
+       if (this.shift.pos > this.shift.min)
+         this.shift.pos -= dt * this.shift.speed;
+       if (this.shift.pos < this.shift.min)
+         this.shift.pos = this.shift.min;
+    }
+
+    // Set colors
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+    this.color3 = this.colorPressure(node3.pressure);
+    this.color4 = this.colorPressure(node4.pressure);
+    this.color5 = this.colorPressure(node5.pressure);
+    this.color6 = this.colorPressure(node6.pressure);
+    this.color7 = this.colorPressure(node7.pressure);
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-90+this.shift.pos, this.y-40,
+                         this.x+30+this.shift.pos, this.y-10, pos);
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x, this.y, 0, -10, this.color1);
+    this.drawPort(ctx, this.x-20, this.y, 0, -10, this.color2);
+    this.drawPort(ctx, this.x+20, this.y, 0, -10, this.color3);
+    this.drawPort(ctx, this.x-20, this.y-50, 0, 10, this.color4);
+    this.drawPort(ctx, this.x+20, this.y-50, 0, 10, this.color5);
+    this.drawPort(ctx, this.x-110, this.y-20, 6, 0, this.color6);
+    this.drawPort(ctx, this.x+110, this.y-20, -6, 0, this.color7);
+    this.drawBody(ctx, this.shift.pos);
+  }
+
+  drawBody(ctx, shift) {
+    let posX = this.x + shift;
+
+    if (shift === this.shift.min) {
+      this.drawArrow(ctx, posX, this.y-10, posX+20, this.y-40+lineWidth, this.color1);
+      this.drawArrow(ctx, posX-20, this.y-40, posX-20, this.y-10-lineWidth, this.color4);
+      this.drawTap(ctx, posX+20, this.y-10, posX+20, this.y-20, this.color3);
+      posX -= 60;
+      this.drawArrow(ctx, posX, this.y-10, posX-20, this.y-40+lineWidth);
+      this.drawArrow(ctx, posX+20, this.y-40, posX+20, this.y-10-lineWidth);
+      this.drawTap(ctx, posX-20, this.y-10, posX-20, this.y-20);
+      posX += 60;
+    }
+    else {
+      this.drawArrow(ctx, posX, this.y-10, posX+20, this.y-40+lineWidth);
+      this.drawArrow(ctx, posX-20, this.y-40, posX-20, this.y-10-lineWidth);
+      this.drawTap(ctx, posX+20, this.y-10, posX+20, this.y-20);
+      posX -= 60;
+      this.drawArrow(ctx, posX, this.y-10, posX-20, this.y-40+lineWidth, this.color1);
+      this.drawArrow(ctx, posX+20, this.y-40, posX+20, this.y-10-lineWidth, this.color5);
+      this.drawTap(ctx, posX-20, this.y-10, posX-20, this.y-20, this.color2);
+      posX += 60;
+    }
+    this.drawPneuRightPilot(ctx, posX, +110, this.color7);
+    this.drawRectangle(ctx, posX-30, this.y-40, posX+30, this.y-10);
+
+    posX -= 60;
+
+    this.drawPneuLeftPilot(ctx, posX, -110, this.color6);
+    this.drawRectangle(ctx, posX-30, this.y-40, posX+30, this.y-10);
+  }
+}
+
+
+/*************************************************************************/
+
+class Node {
+  constructor(pos) {
+    this.volume = 10; // cm3
+    this.pressure = airPressure; // bar
+    this.mass = this.pressure * this.volume;
+    this.x = pos.x;
+    this.y = pos.y;
+  }
+
+  addAir(q) {
+    this.mass += q;
+    this.pressure = this.mass / this.volume;
+  }
+}
+
+
+class Engine {
+
+  constructor() {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.components = [];
+    this.nodes = [];
+  }
+
+  render(dt) {
+    for (const comp of this.components) {
+      comp.update(this.ctx, this, dt);
+    }
+  }
+
+  createNodes() {
+    this.nodes = [];
+    for (const comp of this.components) {
+      for (const pos of comp.vias()) {
+        if (this.findNode(pos) === null) {
+          const newnode = new Node(pos);
+          this.nodes.push(newnode);
+        }
+      }
+    }
+  }
+
+  findNode(pos) {
+    for (const node of this.nodes) {
+      if ((node.x === pos.x) && (node.y === pos.y)) {
+        return node;
+      }
+    }
+    return null;
+  }
+
+  haveTeacherComp() {
+    for (const comp of this.components) {
+      if (parseInt(comp.timestamp, 16) <= minTimestamp) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  addComponent(comp){
+    this.components.push(comp);
+  }
+
+  deleteComponent(comp) {
+    const index = this.components.indexOf(comp);
+    this.components.splice(index, 1);
+  }
+
+  reset() {
+    this.components = [];
+  }
+
+  step(){
+  }
+}
+
+
+/*************************************************************************/
+
+class Renderer{
+  constructor(canvas, engine){
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.engine = engine;
+    this.selectedId = null;
+  }
+
+  draw() {
+    const ctx = this.ctx;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    ctx.textAlign = "start";
+    ctx.font = textFont;
+    ctx.fillStyle = '#aaa';
+    ctx.fillText('Picuino Pneumatic Simulator v' + programVersion, 8, 18);
+    this.drawPosition(mousePosition);
+
+    for (const comp of this.engine.components) {
+      comp.draw(ctx);
+    }
+
+    if (previewComponent) {
+      ctx.save();
+      ctx.globalAlpha = 0.70;
+      previewComponent.draw(ctx);
+      ctx.restore();
+    }
+
+    this.drawStatus();
+  }
+
+  drawPosition(position) {
+    const ctx = this.ctx;
+    if (this.engine.haveTeacherComp()) {
+      ctx.fillStyle = '#fff';
+    }
+    else {
+      ctx.fillStyle = '#afa';
+    }
+    ctx.fillRect(this.canvas.width*0.5-76, 5, 76, 18);
+    if (position !== null) {
+      ctx.textAlign = 'center';
+      ctx.font = textFont;
+      ctx.fillStyle = '#aaa';
+      ctx.fillText(Math.round(position.x) + ',' + Math.round(position.y),
+                   this.canvas.width*0.5-38, 18);
+      ctx.textAlign = 'left';
+    }
+  }
+
+  drawStatus() {
+    const ctx = this.ctx;
+    const status = currentStatusText();
+    const viewportWidth = this.canvas.width / canvasScale;
+    const viewportHeight = this.canvas.height / canvasScale;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+    ctx.strokeStyle = '#cbd6df';
+    ctx.lineWidth = 1;
+    ctx.fillRect(0, viewportHeight - 28, viewportWidth, 28);
+    ctx.beginPath();
+    ctx.moveTo(0, viewportHeight - 28);
+    ctx.lineTo(viewportWidth, viewportHeight - 28);
+    ctx.stroke();
+
+    ctx.font = textFont;
+    ctx.fillStyle = '#28404f';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.beginPath();
+    ctx.rect(10, viewportHeight - 26, viewportWidth - 20, 22);
+    ctx.clip();
+    ctx.fillText(status, 10, viewportHeight - 14);
+    ctx.restore();
+  }
+}
+
+
+/*************************************************************************/
+
+function createComponentInstance(type, position) {
+  if (type === 'Compressor') return new Compressor(position);
+  if (type === 'Manometer') return new Manometer(position);
+  if (type === 'Escape') return new Escape(position);
+  if (type === 'Text') return new Text(position);
+  if (type === 'Cylinder1') return new Cylinder1(position);
+  if (type === 'Cylinder2') return new Cylinder2(position);
+  if (type === 'Valve22m') return new Valve22m(position);
+  if (type === 'Valve32b') return new Valve32b(position);
+  if (type === 'Valve32m') return new Valve32m(position);
+  if (type === 'Valve32p') return new Valve32p(position);
+  if (type === 'Valve32r') return new Valve32r(position);
+  if (type === 'Roller') return new Roller(position);
+  if (type === 'Valve42m') return new Valve42m(position);
+  if (type === 'Valve52m') return new Valve52m(position);
+  if (type === 'Valve52p') return new Valve52p(position);
+  if (type === 'ValveNret') return new ValveNret(position);
+  if (type === 'ValveFlow') return new ValveFlow(position);
+  if (type === 'ValveOr') return new ValveOr(position);
+  if (type === 'ValveAnd') return new ValveAnd(position);
+  return null;
+}
+
+
+function clearPlacementPreview() {
+  previewComponent = null;
+}
+
+
+function updatePlacementPreview(position) {
+  if (drawMode !== 'component' || !componentType || componentType === 'Pipe') {
+    previewComponent = null;
+    return;
+  }
+
+  const component = createComponentInstance(componentType, position);
+  if (!component) {
+    previewComponent = null;
+    return;
+  }
+
+  component.selected = true;
+  previewComponent = component;
+}
+
+
+
+/*************************************************************************/
+
+class UIController {
+  constructor(canvas, engine, renderer) {
+    this.canvas = canvas;
+    this.engine = engine;
+    this.renderer = renderer;
+    this.grid = grid;
+    this.dragThreshold = 4;
+    this.dragState = null;
+    this.positionMoveInit = {x:0, y:0};
+    this.positionCompInit = {x:0, y:0};
+
+    this.canvas.addEventListener('mousedown', e => this._onDown(e));
+    this.canvas.addEventListener('dblclick', e => this._onDoubleClick(e));
+    window.addEventListener('mousemove', e => this._onMove(e));
+    window.addEventListener('mouseup', e => this._onUp(e));
+    window.addEventListener("resize", e => this._resizeCanvas());
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") { this._escape(); }
+      if (event.key === "Delete") { this._delete(); }
+      if (drawMode === null) {
+        if (event.key === 's' || event.key === 'S') { simulationStep(); }
+      }
+      this.renderer.draw();
+    });
+  }
+
+  _delete() {
+    if ((drawMode === 'Move') && (componentMove)) {
+       this.engine.deleteComponent(componentMove);
+    }
+  }
+
+  _findComponentAt(position) {
+    for (let i = this.engine.components.length - 1; i >= 0; i--) {
+      const component = this.engine.components[i];
+      const near = component.near(position);
+      if (near) {
+        return { component, near };
+      }
+    }
+    return null;
+  }
+
+  _isManualValve(component) {
+    return ['Valve32b', 'Valve32m', 'Valve22m', 'Valve42m', 'Valve52m']
+      .includes(component.type);
+  }
+
+  _canEditComponent(component) {
+    return [
+      'Text',
+      'ValveFlow',
+      'Compressor',
+      'Valve32r',
+      'Roller',
+      'Cylinder1',
+      'Cylinder2',
+    ].includes(component.type);
+  }
+
+  _canFlipComponent(component) {
+    return typeof component.flip === 'function';
+  }
+
+  _flipComponent(component) {
+    if (!this._canFlipComponent(component)) {
+      return false;
+    }
+
+    component.flip();
+    this.engine.createNodes();
+    this.renderer.draw();
+    return true;
+  }
+
+  _openComponentEditor(component) {
+    if (!this._canEditComponent(component)) {
+      componentEdit = null;
+      return false;
+    }
+
+    componentEdit = component;
+
+    if (component.type === 'Text') {
+      textPromptAssign('text', 'Text:');
+      return true;
+    }
+    if (component.type === 'ValveFlow') {
+      textPromptAssign('conductance', 'Conductance (10-1000):');
+      return true;
+    }
+    if (component.type === 'Compressor') {
+      textPromptAssign('pressure', 'Pressure (0.5 - ' + compressorPressure + ' bar):');
+      return true;
+    }
+    if (['Valve32r', 'Roller'].includes(component.type)) {
+      textPromptAssign('reference', 'Reference:');
+      return true;
+    }
+    if (['Cylinder1', 'Cylinder2'].includes(component.type)) {
+      textPromptAssign('massLoad', 'Mass Load (kg):');
+      return true;
+    }
+
+    componentEdit = null;
+    return false;
+  }
+
+  _beginDirectDrag(hit, position) {
+    const { component, near } = hit;
+    let mode = 'move';
+    let origin = { x: component.x, y: component.y };
+
+    if (component.type === 'Pipe') {
+      origin = {
+        init: { x: component.init.x, y: component.init.y },
+        end: { x: component.end.x, y: component.end.y },
+      };
+      if (['init', 'end'].includes(near)) {
+        mode = near;
+      }
+      else {
+        mode = 'movePipe';
+      }
+    }
+
+    this.dragState = {
+      component,
+      mode,
+      moved: false,
+      startPosition: { x: position.x, y: position.y },
+      origin,
+      toggleValveOnClick: this._isManualValve(component) &&
+        component.nearPushButton(position),
+    };
+  }
+
+  _updateDirectDrag(position) {
+    if (!this.dragState) {
+      return false;
+    }
+
+    const dragDistance = Math.hypot(
+      position.x - this.dragState.startPosition.x,
+      position.y - this.dragState.startPosition.y,
+    );
+
+    if (!this.dragState.moved && dragDistance < this.dragThreshold) {
+      return false;
+    }
+
+    if (!this.dragState.moved) {
+      this.dragState.moved = true;
+      this.dragState.component.selected = true;
+    }
+
+    if (this.dragState.mode === 'init') {
+      this.dragState.component.moveInit(position);
+    }
+    else if (this.dragState.mode === 'end') {
+      this.dragState.component.moveEnd(position);
+    }
+    else if (this.dragState.mode === 'movePipe') {
+      const x = position.x - this.dragState.startPosition.x + this.dragState.origin.init.x;
+      const y = position.y - this.dragState.startPosition.y + this.dragState.origin.init.y;
+      this.dragState.component.move(x, y);
+    }
+    else {
+      const x = position.x - this.dragState.startPosition.x + this.dragState.origin.x;
+      const y = position.y - this.dragState.startPosition.y + this.dragState.origin.y;
+      this.dragState.component.move(x, y);
+    }
+
+    return true;
+  }
+
+  _endDirectDrag() {
+    if (!this.dragState) {
+      return false;
+    }
+
+    const { component, moved, toggleValveOnClick } = this.dragState;
+
+    if (moved) {
+      component.selected = false;
+      this.engine.createNodes();
+    }
+    else if (toggleValveOnClick) {
+      component.active = !component.active;
+    }
+
+    this.dragState = null;
+    this.renderer.draw();
+    return true;
+  }
+
+  _escape() {
+    drawMode = null;
+    componentType = null;
+    componentMove = null;
+    clearPlacementPreview();
+    if (this.dragState) {
+      this.dragState.component.selected = false;
+    }
+    this.dragState = null;
+    if (editPipe) {
+      this.engine.deleteComponent(editPipe)
+    }
+    editPipe = null;
+    pipeMove = null;
+    initPos = null;
+    updateToolboxSelection();
+  }
+
+  _resizeCanvas(e) {
+    const canvas = this.canvas;
+    const container = canvas.parentElement;
+    const ctx = canvas.getContext('2d');
+    const rect = container.getBoundingClientRect();
+    const width = Math.max(rect.width * canvasScale, minCanvasWidth);
+    const height = Math.max(rect.height * canvasScale, minCanvasHeight);
+    canvas.width  = Math.round(width);
+    canvas.height = Math.round(height);
+    canvas.style.width = this.canvas.width/canvasScale + 'px';
+    canvas.style.height  = this.canvas.height/canvasScale + 'px';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(canvasScale, canvasScale);
+    this.renderer.draw();
+  }
+
+  _getMousePos(e) {
+    const r = this.canvas.getBoundingClientRect();
+    const position = {x:e.clientX - r.left, y:e.clientY - r.top};
+    mousePosition = position;
+    return position;
+  }
+
+  _onDown(e) {
+    let position = this._getMousePos(e);
+
+    if ((drawMode === null) && (simulationActive !== true)) {
+      const hit = this._findComponentAt(position);
+      if (hit) {
+        closeComponentMenu();
+        this._beginDirectDrag(hit, position);
+        this.renderer.drawPosition(position);
+        return;
+      }
+    }
+
+    // Activate manual valves
+    for (const comp of this.engine.components) {
+      if (['Valve32b', 'Valve32m', 'Valve22m', 'Valve42m', 'Valve52m'].includes(comp.type)
+          && comp.nearPushButton(position)) {
+        if (comp.active) comp.active = false;
+        else comp.active = true;
+      }
+    }
+
+    // Edit Options component mode
+    if (drawMode === 'Options') {
+      for (const comp of this.engine.components) {
+        if (comp.near(position)) {
+          if (this._openComponentEditor(comp)) {
+            break;
+          }
+        }
+      }
+      this.renderer.draw();
+    }
+
+    // Flip component mode
+    if (drawMode === 'Flip') {
+      for (const comp of this.engine.components) {
+        if (comp.near(position)) {
+          if (this._flipComponent(comp)) {
+            break;
+          }
+        }
+      }
+    }
+
+
+    // Delete component mode
+    if (drawMode === 'Delete') {
+      let deleteComp = null;
+      for (const comp of this.engine.components) {
+        if (comp.near(position)) {
+          deleteComp = comp;
+          break;
+        }
+      }
+      if (deleteComp) {
+        this.engine.deleteComponent(deleteComp);
+      }
+      this.renderer.draw();
+    }
+
+
+    // Draw component mode
+    if (drawMode === 'component') {
+      let comp = createComponentInstance(componentType, position);
+
+      // Draw Text
+      if (componentType === 'Text') {
+        componentEdit = comp;
+        textPromptAssign('text', 'Text:');
+      }
+      if (['Valve32r', 'Roller'].includes(componentType)) {
+        componentEdit = comp;
+        textPromptAssign('reference', 'Reference:');
+      }
+
+      // Draw pipe
+      if (componentType === 'Pipe') {
+        if (initPos === null) {
+          initPos = position;
+          editPipe = new Pipe(initPos, initPos);
+          comp = editPipe;
+          editPipe.color = selectedColor;
+        }
+        else {
+          editPipe.moveEnd(position);
+          editPipe.color = '#000';
+          if (editPipe.init.x === editPipe.end.x &&
+              editPipe.init.y === editPipe.end.y) {
+            this.engine.deleteComponent(editPipe);
+          }
+          editPipe = null;
+          initPos = null;
+        }
+      }
+
+      // Add component and redraw
+      if (comp !== null) {
+        this.engine.addComponent(comp);
+        updatePlacementPreview(position);
+      }
+      this.renderer.draw();
+    }
+
+    // Move component mode
+    if (drawMode === 'Move') {
+      if (componentMove !== null) {
+        componentMove.selected = false;
+        if (pipeMove === 'init')
+          componentMove.moveInit(position);
+        else if (pipeMove === 'end')
+          componentMove.moveEnd(position);
+        else {
+          const x = position.x - this.positionMoveInit.x + this.positionCompInit.x;
+          const y = position.y - this.positionMoveInit.y + this.positionCompInit.y;
+          componentMove.move(x, y);
+          this.positionMoveInit = {x:0, y:0};
+          this.positionCompInit = {x:0, y:0};
+        }
+        componentMove = null;
+        pipeMove = null;
+      }
+      else {
+        for (const comp of this.engine.components) {
+          const near = comp.near(position);
+          if (near) {
+            componentMove = comp;
+            this.positionMoveInit.x = position.x;
+            this.positionMoveInit.y = position.y;
+            this.positionCompInit.x = comp.x;
+            this.positionCompInit.y = comp.y;
+            componentMove.selected = true;
+            if (componentMove.type === 'Pipe') {
+              pipeMove = near;
+            }
+            break;
+          }
+        }
+      }
+      this.renderer.draw();
+    }
+    this.renderer.drawPosition(position);
+  }
+
+  _onMove(e){
+    let position = this._getMousePos(e);
+    let needsRedraw = false;
+
+    if (this._updateDirectDrag(position)) {
+      needsRedraw = true;
+    }
+
+    updatePlacementPreview(position);
+    if ((drawMode === 'component') && (componentType !== 'Pipe')) {
+      needsRedraw = true;
+    }
+
+    if ((drawMode === 'component') && (componentType === 'Pipe') && (initPos !== null)) {
+      editPipe.moveEnd(position);
+      needsRedraw = true;
+    }
+
+    if ((drawMode === 'Move') && (componentMove)) {
+      if (pipeMove === 'init') {
+        componentMove.moveInit(position);
+      }
+      else if (pipeMove === 'end') {
+        componentMove.moveEnd(position);
+      }
+      else {
+        const x = position.x - this.positionMoveInit.x + this.positionCompInit.x;
+        const y = position.y - this.positionMoveInit.y + this.positionCompInit.y;
+        componentMove.move(x, y);
+      }
+      needsRedraw = true;
+    }
+
+    if (needsRedraw) {
+      this.renderer.draw();
+    }
+    else {
+      this.renderer.drawPosition(position);
+    }
+  }
+
+  _onUp(e){
+    this._endDirectDrag();
+  }
+
+  _onDoubleClick(e) {
+    if ((drawMode !== null) || (simulationActive === true)) {
+      return;
+    }
+
+    const position = this._getMousePos(e);
+    const hit = this._findComponentAt(position);
+    if (!hit) {
+      return;
+    }
+
+    showComponentMenu(hit.component);
+  }
+
+}
+
+/*************************************************************************/
+
+/*
+  cyrb53 (c) 2018 bryc (github.com/bryc)
+  License: Public domain (or MIT if needed). Attribution appreciated.
+  A fast and simple 53-bit string hash function with decent collision resistance.
+  Largely inspired by MurmurHash2/3, but with a focus on speed/simplicity.
+*/
+function cyrb53(str, seed = 0) {
+  let h1 = 0xdeadbeef ^ seed;
+  let h2 = 0x41c6ce57 ^ seed;
+  for(let i = 0, ch; i < str.length; i++) {
+    ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1  = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2  = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  const hash = 4294967296 * (2097151 & h2) + (h1 >>> 0);
+  return hash.toString(16).toUpperCase();
+};
+
+
+
+/************************ FILE OPERATIONS ************************/
+
+function swapScreen() {
+  const elem = document.documentElement;
+  if (!document.fullscreenElement) {
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) { /* Safari */
+      elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) { /* IE11 */
+      elem.msRequestFullscreen();
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) { /* Safari */
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) { /* IE11 */
+      document.msExitFullscreen();
+    }
+  }
+}
+
+function aboutWindowShow() {
+  const aboutWindow = document.getElementById('aboutWindow');
+  const aboutWindowTitle = document.querySelector('#aboutWindow h2');
+  const aboutTitle = 'Simulador Neumático Derivado de Picuino v' + programVersion;
+
+  console.log(aboutTitle);
+  console.log('Original: Carlos Félix Pardo Martín. Modificaciones: Gonzalo Rodríguez Vinuesa.');
+  aboutWindowTitle.textContent = aboutTitle;
+  aboutWindow.showModal();
+}
+
+function resetEditor() {
+   engine.reset();
+   renderer.draw();
+}
+
+function loadSchema(schematicJSON) {
+  if (!schematicJSON) return;
+  const data = JSON.parse(schematicJSON);
+  const header = data.slice(0, 1)[0];
+  const schematic = data.slice(1, -1);
+  const footer = data.slice(-1)[0];
+  const hashData = cyrb53(JSON.stringify(data.slice(0, -1)));
+  if (footer.hash !== hashData) {
+     console.log('Corrupted file!');
+     return;
+  }
+
+  let components = [];
+  for (const comp of schematic) {
+    newcomp = null;
+    if (comp.type === 'Compressor') newcomp = new Compressor({x:comp.x, y:comp.y});
+    if (comp.type === 'Manometer')  newcomp = new Manometer({x:comp.x, y:comp.y});
+    if (comp.type === 'Escape')     newcomp = new Escape({x:comp.x, y:comp.y});
+    if (comp.type === 'Cylinder1')  newcomp = new Cylinder1({x:comp.x, y:comp.y});
+    if (comp.type === 'Cylinder2')  newcomp = new Cylinder2({x:comp.x, y:comp.y});
+    if (comp.type === 'Valve22m')   newcomp = new Valve22m({x:comp.x, y:comp.y});
+    if (comp.type === 'Valve32b')   newcomp = new Valve32b({x:comp.x, y:comp.y});
+    if (comp.type === 'Valve32m')   newcomp = new Valve32m({x:comp.x, y:comp.y});
+    if (comp.type === 'Valve32p')   newcomp = new Valve32p({x:comp.x, y:comp.y});
+    if (comp.type === 'Valve42m')   newcomp = new Valve42m({x:comp.x, y:comp.y});
+    if (comp.type === 'Valve52m')   newcomp = new Valve52m({x:comp.x, y:comp.y});
+    if (comp.type === 'Valve52p')   newcomp = new Valve52p({x:comp.x, y:comp.y});
+    if (comp.type === 'ValveFlow')  newcomp = new ValveFlow({x:comp.x, y:comp.y});
+    if (comp.type === 'ValveOr')    newcomp = new ValveOr({x:comp.x, y:comp.y});
+    if (comp.type === 'ValveAnd')   newcomp = new ValveAnd({x:comp.x, y:comp.y});
+    if (comp.type === 'Text')       newcomp = new Text({x:comp.x, y:comp.y});
+    if (comp.type === 'Valve32r')   newcomp = new Valve32r({x:comp.x, y:comp.y});
+    if (comp.type === 'Roller')     newcomp = new Roller({x:comp.x, y:comp.y});
+    if (comp.type === 'ValveNret')     newcomp = new ValveNret({x:comp.x, y:comp.y});
+    if (comp.type === 'Pipe')       newcomp = new Pipe(comp.init, comp.end);
+    if (newcomp) {
+      Object.assign(newcomp.options, comp.options);
+      newcomp.validateOptions();
+      newcomp.timestamp = comp.stamp;
+      components.push(newcomp);
+    }
+  }
+  return components;
+}
+
+
+async function openSchema() {
+  let schematic = null;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    const schematic = await file.text();
+    components = loadSchema(schematic);
+    if (components) {
+      engine.components = components;
+      engine.createNodes();
+      renderer.draw();
+    }
+  };
+  input.click();
+  engine.createNodes();
+}
+
+
+async function openFile(filename) {
+  try {
+    const normalizedFilename = normalizeExampleFilename(filename);
+    const embeddedExamples = window.EMBEDDED_EXAMPLES || {};
+    let schematic = embeddedExamples[normalizedFilename];
+
+    if (!schematic) {
+      const answer = await fetch(filename);
+
+      if (!answer.ok) {
+        throw new Error("Could not read the file");
+      }
+      schematic = await answer.text();
+    }
+    components = loadSchema(schematic);
+    if (components) {
+      engine.components = components;
+      engine.createNodes();
+      renderer.draw();
+      return true;
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+  return false;
+}
+
+async function loadExampleFile(filename, updateHistory = true) {
+  const normalizedFilename = normalizeExampleFilename(filename);
+  if (!normalizedFilename) {
+    return false;
+  }
+
+  simulationStop();
+  closeComponentMenu();
+  drawMode = null;
+  clearPlacementPreview();
+
+  const loaded = await openFile('./' + normalizedFilename);
+  if (!loaded) {
+    return false;
+  }
+
+  if (updateHistory) {
+    updateExampleQuery(normalizedFilename);
+  }
+
+  updateToolboxSelection();
+  renderer.draw();
+  return true;
+}
+
+function ensureFilenameExtension(filename, extension, fallbackName = '') {
+  const normalizedExtension = extension.startsWith('.') ? extension : `.${extension}`;
+  const baseName = (filename || fallbackName || '').trim().replace(/[\\/:*?"<>|]+/g, '-');
+  if (!baseName) {
+    return null;
+  }
+  if (baseName.toLowerCase().endsWith(normalizedExtension.toLowerCase())) {
+    return baseName;
+  }
+  return baseName + normalizedExtension;
+}
+
+function resolveSaveFileDialog(confirmed) {
+  if (!saveFileDialogResolve) {
+    if (saveFileDialog.open) {
+      saveFileDialog.close();
+    }
+    return;
+  }
+
+  const resolve = saveFileDialogResolve;
+  saveFileDialogResolve = null;
+  const extension = saveFileNameInput.dataset.extension || '.txt';
+  const fallbackName = saveFileNameInput.dataset.fallbackName || 'neumatic';
+  const filename = confirmed
+    ? ensureFilenameExtension(saveFileNameInput.value, extension, fallbackName)
+    : null;
+
+  if (saveFileDialog.open) {
+    saveFileDialog.close();
+  }
+  resolve(filename);
+}
+
+async function requestFallbackFilename(title, suggestedName, extension) {
+  const normalizedFilename = ensureFilenameExtension(suggestedName, extension, suggestedName);
+
+  if (!saveFileDialog || typeof saveFileDialog.showModal !== 'function') {
+    const typedName = window.prompt(title, normalizedFilename);
+    return ensureFilenameExtension(typedName, extension, normalizedFilename);
+  }
+
+  if (saveFileDialog.open) {
+    saveFileDialog.close();
+  }
+
+  saveFileDialogTitle.textContent = title;
+  saveFileNameInput.value = normalizedFilename;
+  saveFileNameInput.dataset.extension = extension;
+  saveFileNameInput.dataset.fallbackName = normalizedFilename;
+  saveFileDialog.showModal();
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  saveFileNameInput.focus();
+  saveFileNameInput.select();
+
+  return new Promise((resolve) => {
+    saveFileDialogResolve = resolve;
+  });
+}
+
+
+async function savePNG(filename = "image.png") {
+  renderer.draw();
+
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+  if (!blob) {
+    console.error("Error generating PNG image.");
+    return;
+  }
+  
+  if ("showSaveFilePicker" in window) {
+    // Chrome / Edge
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{description: "PNG", accept: {"image/png": [".png"]}}]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    }
+    catch (err) {
+      if (err.name === "AbortError")
+        return;
+      console.error(err);
+    }
+  }
+  else {
+    // Firefox
+    const fallbackFilename = await requestFallbackFilename(
+      t('saveImageDialogTitle'),
+      filename,
+      '.png',
+    );
+    if (!fallbackFilename) {
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const downloadLink = document.createElement('a');
+    downloadLink.href = url;
+    downloadLink.download = fallbackFilename;
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(url);
+  }
+}
+
+
+async function saveSchema(rol) {
+  let schematic = [{
+    type: 'Schematic',
+    program: 'Picuino Pneumatic Simulator',
+    version: programVersion,
+  }];
+  for (const comp of engine.components) {
+    let data = comp.serialize();
+    if (rol === 'teacher') {
+      data.stamp = '1000000000';
+    }
+    schematic.push(data);
+  }
+  schematicJSON = JSON.stringify(schematic);
+  const hash = cyrb53(schematicJSON);
+  schematic.push({type:'hash', hash});
+  schematicJSONHash = JSON.stringify(schematic);
+  const blob = new Blob([schematicJSONHash], { type: 'text/plain;charset=utf-8' });
+  const defaultFilename = rol === 'teacher' ? 'neumatic-teacher.txt' : 'neumatic-student.txt';
+  await saveJSON(blob, defaultFilename);
+}
+
+
+async function saveJSON(blob, filename = 'neumatic.txt') {
+  if ("showSaveFilePicker" in window) {
+    // Chrome / Edge
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{description: "Text", accept: {"text/plain": [".txt"]}}]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    }
+    catch (err) {
+      if (err.name === "AbortError")
+        return;
+      console.error(err);
+    }
+  }
+  else {
+    // Firefox
+    const fallbackFilename = await requestFallbackFilename(
+      t('saveFileDialogTitle'),
+      filename,
+      '.txt',
+    );
+    if (!fallbackFilename) {
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const downloadLink = document.createElement('a');
+    downloadLink.href = url;
+    downloadLink.download = fallbackFilename;
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(url);
+  }
+}
+
+/************************ COMPARE FILES ************************/
+function compareFilesShow() {
+  const compareWindow = document.getElementById('compareWindow');
+  const compareWindowTitle = document.querySelector('#compareFiles h2');
+  compareWindow.showModal();
+}
+
+function compareWindowClose() {
+  const compareWindow = document.getElementById('compareWindow');
+  compareWindow.close();
+}
+
+async function compareWindowReport() {
+  const inputFiles = Array.from(document.getElementById('compareFileInput').files);
+  const compareResults = document.getElementById('compareResults');
+
+  const jsons = [];
+  for (const file of inputFiles) {
+    const json = await readJSON(file);
+    jsons.push(json);
+  }
+  reportErrors(inputFiles, jsons);
+}
+
+function readJSON(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        // Captura errores de formato JSON
+        const data = JSON.parse(reader.result);
+        resolve(data);
+      } catch (err) {
+        resolve([]);
+      }
+    }
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+}
+
+function testJSON(json) {
+  if (json.length === 0)
+    return false;
+  const footer = json.slice(-1)[0];
+  const hashData = cyrb53(JSON.stringify(json.slice(0, -1)));
+  if (footer.hash !== hashData) {
+    return false;
+  }
+  return true;
+}
+
+function testTeacher(json) {
+  if (json.length === 0)
+    return 0;
+  let comps = 0;
+  for(let i = 1; i < json.length-1; i++) {
+    if (json[i].stamp <= '1900000000') comps++;
+  }
+  return comps;
+}
+
+function reportErrors(files, jsons) {
+  let removeFiles = [];
+  let htmlcode = [];
+  htmlcode.push('<hr><p><strong>Corrupted files:</strong></p><table>');
+  for (let i = 0; i < files.length; i++) {
+    const valid = testJSON(jsons[i]);
+    if (!valid) {
+      htmlcode.push('<tr><td>' + files[i].name + '</td><td>Corrupted file.</td></tr>');
+      removeFiles.push(i);
+    }
+  }
+  files = files.filter((_, index) => !removeFiles.includes(index));
+  jsons = jsons.filter((_, index) => !removeFiles.includes(index));
+
+  htmlcode.push('</table><p><strong>Teacher files:</strong></p><table>');
+  for (let i = 0; i < files.length; i++) {
+    const teacherComps = testTeacher(jsons[i]);
+    if (teacherComps > 0) {
+      htmlcode.push('<tr><td>' + files[i].name + '</td><td>' + teacherComps + '</td><td>Teacher Components inside.</td></tr>');
+      removeFiles.push(i);
+    }
+  }
+  //files = files.filter((_, index) => !removeFiles.includes(index));
+  //jsons = jsons.filter((_, index) => !removeFiles.includes(index));
+  htmlcode.push('</table>');
+
+  database = {};
+  for (let i = 0; i < files.length; i++) {
+    const json = jsons[i];
+    const filename = files[i].name;
+    for(let j = 1; j < json.length - 1; j++) {
+      const stamp = json[j].stamp + '+' + json[j].type;
+      if (!database[stamp]) {
+        database[stamp] = [];
+      }
+      if (!database[stamp].includes(filename)) {
+        database[stamp].push(filename);
+      }
+    }
+  }
+  htmlcode.push('<p><strong>Shared components:</strong></p><table>');
+  const timestamps = Object.keys(database).sort();
+  for (let i = 0; i < timestamps.length; i++) {
+    if (database[timestamps[i]].length > 1) {
+      htmlcode.push('<tr><td>' + timestamps[i] + '</td><td>' + database[timestamps[i]] + '.</td></tr>');
+    }
+  }
+  htmlcode.push('</table><hr>');
+  compareResults.innerHTML = htmlcode.join('\n');
+  console.log(htmlcode.join('\n'))
+}
+
+
+/************************ SIMULATION AUDIO ************************/
+
+function updateQuickSimulationButton() {
+  if (!quickSimBtn) return;
+
+  const running = isSimulationRunning();
+  const label = running ? t('quickSimStop') : t('quickSimPlay');
+  quickSimBtn.dataset.state = running ? 'running' : 'stopped';
+  quickSimBtn.classList.toggle('active', running);
+  quickSimBtn.title = label;
+  quickSimBtn.setAttribute('aria-label', label);
+}
+
+function createNoiseBuffer(ctx, seconds = 2) {
+  const buffer = ctx.createBuffer(1, ctx.sampleRate * seconds, ctx.sampleRate);
+  const channel = buffer.getChannelData(0);
+  for (let i = 0; i < channel.length; i++) {
+    channel[i] = (Math.random() * 2 - 1) * 0.8;
+  }
+  return buffer;
+}
+
+async function ensureSimulationSound() {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) {
+    return null;
+  }
+
+  if (!simulationAudio) {
+    const ctx = new AudioCtx();
+    const masterGain = ctx.createGain();
+    const compressor = ctx.createDynamicsCompressor();
+    masterGain.gain.value = 0.8;
+
+    compressor.threshold.value = -24;
+    compressor.knee.value = 8;
+    compressor.ratio.value = 3;
+    compressor.attack.value = 0.003;
+    compressor.release.value = 0.18;
+
+    masterGain.connect(compressor);
+    compressor.connect(ctx.destination);
+
+    simulationAudio = {
+      ctx,
+      masterGain,
+      compressor,
+    };
+  }
+
+  if (simulationAudio.ctx.state === 'suspended') {
+    await simulationAudio.ctx.resume();
+  }
+
+  return simulationAudio;
+}
+
+function isAudibleValveType(type) {
+  return ['Valve22m', 'Valve32b', 'Valve32m', 'Valve32r', 'Valve32p', 'Valve42m', 'Valve52m', 'Valve52p'].includes(type);
+}
+
+function captureSimulationAudioComponentState(comp) {
+  if (isAudibleValveType(comp.type) && comp.shift && typeof comp.shift.pos === 'number') {
+    return {
+      kind: 'valve',
+      active: Boolean(comp.active),
+      shiftPos: comp.shift.pos,
+    };
+  }
+
+  if (['Cylinder1', 'Cylinder2'].includes(comp.type) && comp.position) {
+    return {
+      kind: 'cylinder',
+      position: comp.position.actual,
+      speed: comp.speed || 0,
+      min: comp.position.min,
+      max: comp.position.max,
+    };
+  }
+
+  return null;
+}
+
+function resetSimulationAudioState() {
+  simulationAudioState = new WeakMap();
+  for (const comp of engine.components) {
+    const state = captureSimulationAudioComponentState(comp);
+    if (state) {
+      simulationAudioState.set(comp, state);
+    }
+  }
+}
+
+async function unlockSimulationSound() {
+  try {
+    await ensureSimulationSound();
+  } catch (error) {
+    console.warn('Could not unlock simulation sound:', error);
+  }
+}
+
+function cleanupAudioNodes(...nodes) {
+  nodes.forEach((node) => {
+    try {
+      node.disconnect();
+    } catch (error) {
+    }
+  });
+}
+
+function playValveEventSound(strength = 1) {
+  ensureSimulationSound()
+    .then((audio) => {
+      if (!audio) return;
+
+      const ctx = audio.ctx;
+      const now = ctx.currentTime;
+
+      const noiseSource = ctx.createBufferSource();
+      const noiseFilter = ctx.createBiquadFilter();
+      const noiseGain = ctx.createGain();
+      const tickOsc = ctx.createOscillator();
+      const tickGain = ctx.createGain();
+
+      noiseSource.buffer = createNoiseBuffer(ctx, 0.06);
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.value = 2200;
+      noiseFilter.Q.value = 1.5;
+      noiseGain.gain.setValueAtTime(0.00001, now);
+      noiseGain.gain.linearRampToValueAtTime(0.11 * strength, now + 0.004);
+      noiseGain.gain.exponentialRampToValueAtTime(0.00001, now + 0.045);
+
+      tickOsc.type = 'square';
+      tickOsc.frequency.setValueAtTime(1250, now);
+      tickOsc.frequency.exponentialRampToValueAtTime(620, now + 0.03);
+      tickGain.gain.setValueAtTime(0.00001, now);
+      tickGain.gain.linearRampToValueAtTime(0.018 * strength, now + 0.003);
+      tickGain.gain.exponentialRampToValueAtTime(0.00001, now + 0.03);
+
+      noiseSource.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(audio.masterGain);
+
+      tickOsc.connect(tickGain);
+      tickGain.connect(audio.masterGain);
+
+      noiseSource.start(now);
+      noiseSource.stop(now + 0.06);
+      tickOsc.start(now);
+      tickOsc.stop(now + 0.035);
+
+      noiseSource.onended = () => cleanupAudioNodes(noiseSource, noiseFilter, noiseGain);
+      tickOsc.onended = () => cleanupAudioNodes(tickOsc, tickGain);
+    })
+    .catch(() => {});
+}
+
+function playCylinderImpactSound(direction = 'extend', speed = 0) {
+  ensureSimulationSound()
+    .then((audio) => {
+      if (!audio) return;
+
+      const ctx = audio.ctx;
+      const now = ctx.currentTime;
+      const strength = Math.max(0.45, Math.min(1, 0.45 + Math.abs(speed) / 18));
+      const baseFreq = direction === 'extend' ? 110 : 88;
+
+      const thudOsc = ctx.createOscillator();
+      const thudGain = ctx.createGain();
+      const bodySource = ctx.createBufferSource();
+      const bodyFilter = ctx.createBiquadFilter();
+      const bodyGain = ctx.createGain();
+
+      thudOsc.type = 'triangle';
+      thudOsc.frequency.setValueAtTime(baseFreq, now);
+      thudOsc.frequency.exponentialRampToValueAtTime(baseFreq * 0.72, now + 0.08);
+      thudGain.gain.setValueAtTime(0.00001, now);
+      thudGain.gain.linearRampToValueAtTime(0.05 * strength, now + 0.01);
+      thudGain.gain.exponentialRampToValueAtTime(0.00001, now + 0.12);
+
+      bodySource.buffer = createNoiseBuffer(ctx, 0.12);
+      bodyFilter.type = 'lowpass';
+      bodyFilter.frequency.value = 380;
+      bodyGain.gain.setValueAtTime(0.00001, now);
+      bodyGain.gain.linearRampToValueAtTime(0.12 * strength, now + 0.008);
+      bodyGain.gain.exponentialRampToValueAtTime(0.00001, now + 0.1);
+
+      thudOsc.connect(thudGain);
+      thudGain.connect(audio.masterGain);
+
+      bodySource.connect(bodyFilter);
+      bodyFilter.connect(bodyGain);
+      bodyGain.connect(audio.masterGain);
+
+      thudOsc.start(now);
+      thudOsc.stop(now + 0.13);
+      bodySource.start(now);
+      bodySource.stop(now + 0.12);
+
+      thudOsc.onended = () => cleanupAudioNodes(thudOsc, thudGain);
+      bodySource.onended = () => cleanupAudioNodes(bodySource, bodyFilter, bodyGain);
+    })
+    .catch(() => {});
+}
+
+function processSimulationAudioEvents() {
+  const edgeTolerance = 0.001;
+
+  for (const comp of engine.components) {
+    const nextState = captureSimulationAudioComponentState(comp);
+    if (!nextState) {
+      continue;
+    }
+
+    const prevState = simulationAudioState.get(comp);
+    simulationAudioState.set(comp, nextState);
+    if (!prevState) {
+      continue;
+    }
+
+    if (nextState.kind === 'valve') {
+      if (prevState.active !== nextState.active) {
+        playValveEventSound(nextState.active ? 1 : 0.85);
+      }
+      continue;
+    }
+
+    if (nextState.kind === 'cylinder') {
+      const reachedMin = prevState.position > nextState.min + edgeTolerance &&
+        nextState.position <= nextState.min + edgeTolerance;
+      const reachedMax = prevState.position < nextState.max - edgeTolerance &&
+        nextState.position >= nextState.max - edgeTolerance;
+
+      if (reachedMin) {
+        playCylinderImpactSound('retract', prevState.speed);
+      }
+      else if (reachedMax) {
+        playCylinderImpactSound('extend', prevState.speed);
+      }
+    }
+  }
+}
+
+function simulationToggle() {
+  if (isSimulationRunning()) {
+    simulationStop();
+    return;
+  }
+
+  if (engine.nodes.length === 0) {
+    simulationInit();
+  }
+  else {
+    simulationContinue();
+  }
+}
+
+
+
+/************************ SIMULATION ************************/
+
+function simulationInit() {
+  drawMode = null;
+  clearPlacementPreview();
+  engine.createNodes();
+  resetSimulationAudioState();
+  unlockSimulationSound();
+  animationID = requestAnimationFrame(simulationRender);
+  simulationActive = true;
+  updateToolboxSelection();
+  updateQuickSimulationButton();
+}
+
+function simulationStep() {
+  drawMode = null;
+  clearPlacementPreview();
+  stepTime = 250;
+
+  if (simulationActive !== true) {
+    simulationInit();
+  }
+  if (animationID === null) {
+    resetSimulationAudioState();
+    unlockSimulationSound();
+    animationID = requestAnimationFrame(simulationRender);
+  }
+  updateToolboxSelection();
+  updateQuickSimulationButton();
+}
+
+function simulationStop() {
+  drawMode = null;
+  clearPlacementPreview();
+  simulationActive = false;
+  if (animationID !== null) {
+    cancelAnimationFrame(animationID);
+    animationID = null;
+  }
+  resetSimulationAudioState();
+  updateToolboxSelection();
+  updateQuickSimulationButton();
+}
+
+function simulationContinue() {
+  drawMode = null;
+  clearPlacementPreview();
+  simulationActive = true;
+  resetSimulationAudioState();
+  unlockSimulationSound();
+  if (animationID === null) {
+    animationID = requestAnimationFrame(simulationRender);
+  }
+  updateToolboxSelection();
+  updateQuickSimulationButton();
+}
+
+function simulationReset() {
+  simulationStop();
+  clearPlacementPreview();
+  for (const comp of engine.components) {
+    comp.reset();
+  }
+  engine.createNodes();
+  resetSimulationAudioState();
+  renderer.draw();
+  updateToolboxSelection();
+  updateQuickSimulationButton();
+}
+
+
+function simulationRender(ms) {
+  if (ms - simulationTime > 50) {
+    simulationTime = ms - 50;
+  }
+
+  animationTime = ms - simulationTime;
+  const init = performance.now();
+
+  // Ejecutar tantos pasos de 1 ms como quepan en el tiempo acumulado
+  while (simulationTime < ms) {
+    engine.render(0.001);
+    processSimulationAudioEvents();
+    simulationTime += 1;
+    if (stepTime && stepTime > 0)
+      stepTime -= 1;
+  }
+
+  if (stepTime === 0) {
+    stepTime = null;
+    animationID = null;
+    simulationActive = false;
+    resetSimulationAudioState();
+    updateQuickSimulationButton();
+  }
+
+  // Aquí solo dibujas el estado actual (una vez por frame)
+  if (simulationActive) {
+    renderer.draw();
+  }
+
+  renderTime = 100*(performance.now() - init)/animationTime;
+  animationLoad = animationLoad * 0.95 + renderTime * 0.05;
+
+  if (animationID && simulationActive) {
+    requestAnimationFrame(simulationRender);
+  }
+}
+let animationLoad = 0;
+let animationID = null;
+let simulationTime = 0;
+let animationTime = 0;
+let accumulator = 0;
+
+
+/************************ LANGUAGES ************************/
+
+function setLanguage(lang) {
+  if (! ['en', 'es'].includes(lang)) {
+    lang = 'en';
+  }
+  globalLang = lang;
+  const elements = document.querySelectorAll("[data-i18n]");
+  elements.forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    const translation = translations[lang][key];
+    if (translation) {
+      el.textContent = translation;
+    }
+  });
+  updateQuickSimulationButton();
+}
+
+function enLang() {
+  globalLang = 'en';
+  setLanguage('en');
+}
+
+function esLang() {
+  globalLang = 'es';
+  setLanguage('es');
+}
+
+function navigatorLang() {
+  const lang = (navigator.language || navigator.userLanguage).substring(0, 2);
+  setLanguage(lang)
+}
+
+
+/************************ MAIN ************************/
+const aboutWindowClose = document.getElementById('aboutCloseBtn');
+const saveFileDialog = document.getElementById('saveFileDialog');
+const saveFileDialogTitle = document.getElementById('saveFileDialogTitle');
+const saveFileNameInput = document.getElementById('saveFileNameInput');
+const saveFileCancelBtn = document.getElementById('saveFileCancelBtn');
+const saveFileConfirmBtn = document.getElementById('saveFileConfirmBtn');
+const textPrompt = document.getElementById('textPrompt');
+const textInput = document.getElementById('textInput');
+const messageInput = document.getElementById('messageInput');
+const componentMenu = document.getElementById('componentMenu');
+const componentMenuEditBtn = document.getElementById('componentMenuEditBtn');
+const componentMenuFlipBtn = document.getElementById('componentMenuFlipBtn');
+const componentMenuDeleteBtn = document.getElementById('componentMenuDeleteBtn');
+const componentMenuCloseBtn = document.getElementById('componentMenuCloseBtn');
+const quickSimBtn = document.getElementById('quickSimBtn');
+
+const engine = new Engine();
+const renderer = new Renderer(canvas, engine);
+const ui = new UIController(canvas, engine, renderer);
+let last = performance.now();
+let componentMenuTarget = null;
+let saveFileDialogResolve = null;
+
+
+function closeComponentMenu() {
+  componentMenuTarget = null;
+  if (componentMenu.open) {
+    componentMenu.close();
+  }
+}
+
+
+function showComponentMenu(component) {
+  componentMenuTarget = component;
+  componentMenuEditBtn.hidden = !ui._canEditComponent(component);
+  componentMenuFlipBtn.hidden = !ui._canFlipComponent(component);
+  componentMenuDeleteBtn.hidden = false;
+
+  if (!componentMenu.open) {
+    componentMenu.showModal();
+  }
+}
+
+
+function firstSetupApp() {
+  ui._resizeCanvas();
+  navigatorLang();
+  updateToolboxSelection();
+  updateQuickSimulationButton();
+  document.addEventListener('pointerdown', unlockSimulationSound, { passive: true });
+  document.addEventListener('keydown', unlockSimulationSound);
+
+  let config = query_read();
+  for(let i = 0; i < config.length; i++) {
+    let line = config[i];
+    if (line.length === 2 && line[0] === 'loadFile') {
+      loadExampleFile(line[1], false);
+    }
+  }
+}
+
+
+firstSetupApp();
+
+saveFileDialog?.addEventListener('cancel', (event) => {
+  event.preventDefault();
+  resolveSaveFileDialog(false);
+});
+
+saveFileNameInput?.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    resolveSaveFileDialog(true);
+  }
+});
+
+saveFileCancelBtn.onclick = () => resolveSaveFileDialog(false);
+saveFileConfirmBtn.onclick = () => resolveSaveFileDialog(true);
+
+componentMenu.addEventListener('close', () => {
+  componentMenuTarget = null;
+});
+
+componentMenuEditBtn.onclick = () => {
+  if (!componentMenuTarget) return;
+  const component = componentMenuTarget;
+  closeComponentMenu();
+  ui._openComponentEditor(component);
+};
+
+componentMenuFlipBtn.onclick = () => {
+  if (!componentMenuTarget) return;
+  const component = componentMenuTarget;
+  ui._flipComponent(component);
+  closeComponentMenu();
+};
+
+componentMenuDeleteBtn.onclick = () => {
+  if (!componentMenuTarget) return;
+  engine.deleteComponent(componentMenuTarget);
+  engine.createNodes();
+  closeComponentMenu();
+  renderer.draw();
+};
+
+componentMenuCloseBtn.onclick = () => closeComponentMenu();
+
+aboutWindowClose.onclick = () => aboutWindow.close();
+
+
+function snap(v, gr=grid) {
+  return Math.round(v/gr)*gr;
+}
+
+
+function textPromptAssign(key, message) {
+  textPromptDialog(componentEdit.options[key], message);
+
+  textPrompt.addEventListener('close', () => {
+    if (textPrompt.returnValue !== 'cancel' && componentEdit) {
+      const text = textInput.value.trim();
+      if (text.length > 0) {
+        componentEdit.options[key] = text;
+        componentEdit.validateOptions();
+      }
+      componentEdit = null;
+      renderer.draw();
+    }
+  }, { once: true });
+}
+
+
+function textPromptDialog(content='Text', message='Value:') {
+  textInput.value = content;
+  messageInput.innerText = message;
+  textPrompt.showModal();
+}
+
+
+// Read query string from URL
+function query_read() {
+  return Array.from(new URLSearchParams(window.location.search).entries());
+}
+
+// Confirm close window
+function closeConfirm() {
+  return translations[globalLang]['closeConfirm'];
+}
+
+</script>
+</body>
+</html>

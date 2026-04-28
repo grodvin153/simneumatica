@@ -1,22 +1,30 @@
-Picuino Pneumatic Simulator
-===========================
-Copyright � 2025 Carlos F�lix Pardo Mart�n.
+SimNeumatica v2.9
+=================
 
-* [Simulator in Picuino web site](https://www.picuino.com/neumatic/)
-* [Simulator in GitHub web site](https://picuino.github.io/neumatic/)
-* [Tutorial (Spanish)](https://www.picuino.com/es/mecan-neumatic-index.html)
-* [Tutorial (English)](https://www.picuino.com/en/mecan-neumatic-index.html)
-* [Source Code (html+css+js)](https://github.com/picuino/neumatic/blob/main/source/index.html)
+SimNeumática es una versión derivada del simulador neumático original de Picuino, adaptada y ampliada por Gonzalo Rodríguez Vinuesa.
 
-This program is free software: you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation, either version 3 of the License, or 
-(at your option) any later version.
+Enlace publicado:
+* [SimNeumatica en GitHub Pages](https://grodvin153.github.io/simneumatica/)
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- See the GNU General Public License for more details.
+Novedades principales de la versión 2.9:
+* Paleta lateral izquierda con iconos de todos los elementos disponibles.
+* Inserción visual con `ghost` del componente y línea de estado con ayuda contextual.
+* Arrastre directo de componentes y edición por doble clic con menú de acciones.
+* Botón superior de simulación y sonidos de eventos generados con Web Audio API.
+* Zoom `+` y `-`, modo mano para desplazamiento de vista y botón de autoajuste.
+* Guardado con nombre personalizado y mejoras de carga de ejemplos.
+* Identidad visual y nombre propios para esta edición.
 
-You should have received a copy of the GNU General Public License along
-with this program. If not, see https://www.gnu.org/licenses/gpl-3.0.html.
+Proyecto original y atribución:
+* [Web original del simulador](https://www.picuino.com/neumatic/)
+* [Repositorio original](https://github.com/picuino/neumatic/)
+* Autor original: Carlos Félix Pardo Martín
+* Modificaciones de esta versión: Gonzalo Rodríguez Vinuesa
+* Contacto: [gonzalorv@gmail.com](mailto:gonzalorv@gmail.com)
+
+Licencia:
+
+Esta aplicación es una obra derivada y se distribuye bajo los términos de la GNU GPL v3 o posterior. Se mantiene la atribución al autor original del proyecto base.
+
+Copyright © 2025 Carlos Félix Pardo Martín sobre la obra original.
+Copyright © 2026 Gonzalo Rodríguez Vinuesa sobre las modificaciones de esta versión.

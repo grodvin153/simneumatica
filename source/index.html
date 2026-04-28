@@ -6,7 +6,7 @@
 
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="description" content="Interactive pneumatic circuit simulator designed for students and teachers. Build, test, and visualize pneumatic systems online.">
-  <title data-i18n="title">Simulador de Neumatica</title>
+  <title data-i18n="title">SimNeumatica</title>
 
   <!-- Add your own local favicon files before publishing this on a new domain. -->
   <!-- Set the canonical URL when you decide the final public address. -->
@@ -1023,7 +1023,7 @@
 
   <dialog id="aboutWindow">
     <div>
-    <h2>Simulador de Neumática</h2>
+    <h2>SimNeumática</h2>
     <p><strong>Versión modificada y adaptada por Gonzalo Rodríguez Vinuesa.</strong></p>
     <p><strong>Contacto:</strong> <a href="mailto:gonzalorv@gmail.com">gonzalorv@gmail.com</a></p>
     <p><strong>Autor de la obra original:</strong> Carlos Félix Pardo Martín.</p>
@@ -1073,7 +1073,7 @@
 <script>
 
 /*
-   Picuino Pneumatic Simulator.
+   SimNeumatica.
 
    Copyright © 2025 Carlos Félix Pardo Martín.
 
@@ -1092,7 +1092,7 @@
 */
 
 /* Global constants and variables */
-const programVersion = '2.8';
+const programVersion = '2.9';
 const canvas = document.getElementById('canvas');
 const toolButtons = document.querySelectorAll('.tool-btn');
 const grid = 10;
@@ -1144,7 +1144,7 @@ let viewOffset = { x: 0, y: 0 };
 const translations = {
 
   en: {
-    title: 'Pneumatic Simulator',
+    title: 'SimNeumatica',
     closeConfirm: "Are you sure you want to leave this page?",
     aboutCloseBtn: 'Close Window',
     saveFileDialogTitle: 'Save file',
@@ -1226,7 +1226,7 @@ const translations = {
   },
 
   es: {
-    title: 'Simulador de Neumática',
+    title: 'SimNeumática',
     closeConfirm: "¿Realmente desea salir de la página web?",
     aboutCloseBtn: 'Cerrar Ventana',
     saveFileDialogTitle: 'Guardar archivo',
@@ -5256,7 +5256,7 @@ function swapScreen() {
 function aboutWindowShow() {
   const aboutWindow = document.getElementById('aboutWindow');
   const aboutWindowTitle = document.querySelector('#aboutWindow h2');
-  const aboutTitle = 'Simulador de Neumática v' + programVersion;
+  const aboutTitle = 'SimNeumática v' + programVersion;
 
   console.log(aboutTitle);
   console.log('Original: Carlos Félix Pardo Martín. Modificaciones: Gonzalo Rodríguez Vinuesa.');
@@ -5507,7 +5507,7 @@ async function savePNG(filename = "image.png") {
 async function saveSchema(rol) {
   let schematic = [{
     type: 'Schematic',
-    program: 'Simulador de Neumática',
+    program: 'SimNeumática',
     version: programVersion,
   }];
   for (const comp of engine.components) {

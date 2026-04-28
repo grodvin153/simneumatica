@@ -89,6 +89,12 @@
     color: var(--toolbox-accent);
   }
 
+  .menu-quick-btn:disabled {
+    background: transparent;
+    color: #90a2af;
+    cursor: default;
+  }
+
   .menu-quick-btn.active {
     background: #dfeef8;
     color: var(--toolbox-accent);
@@ -103,6 +109,14 @@
     width: 20px;
     height: 20px;
     fill: currentColor;
+  }
+
+  .quick-outline-btn svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .menu-quick-btn[data-state="stopped"] .quick-stop-shape,
@@ -293,6 +307,14 @@
   .canvas {
     display: block;
     background: #f8f8f8;
+  }
+
+  .canvas.is-pan-mode {
+    cursor: grab;
+  }
+
+  .canvas.is-pan-mode.is-pan-dragging {
+    cursor: grabbing;
   }
 
   .toolbox-sprite {
@@ -612,6 +634,62 @@
     </ul>
 
     <div class="menu-quick-actions">
+      <button
+        type="button"
+        id="quickZoomOutBtn"
+        class="menu-quick-btn quick-outline-btn"
+        data-action="vZoomOut"
+        aria-label="Zoom out"
+        title="Zoom out">
+        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+          <path d="M5 10h10"></path>
+        </svg>
+      </button>
+      <button
+        type="button"
+        id="quickZoomInBtn"
+        class="menu-quick-btn quick-outline-btn"
+        data-action="vZoomIn"
+        aria-label="Zoom in"
+        title="Zoom in">
+        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+          <path d="M5 10h10"></path>
+          <path d="M10 5v10"></path>
+        </svg>
+      </button>
+      <button
+        type="button"
+        id="quickFitBtn"
+        class="menu-quick-btn quick-outline-btn"
+        data-action="vZoomFit"
+        aria-label="Auto fit"
+        title="Auto fit">
+        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+          <path d="M3.5 7V3.5H7"></path>
+          <path d="M12.8 3.5h3.7V7.2"></path>
+          <path d="M16.5 12.8v3.7h-3.7"></path>
+          <path d="M7.2 16.5H3.5v-3.7"></path>
+          <path d="M7 7l-3.5-3.5"></path>
+          <path d="M13 7l3.5-3.5"></path>
+          <path d="M13 13l3.5 3.5"></path>
+          <path d="M7 13l-3.5 3.5"></path>
+        </svg>
+      </button>
+      <button
+        type="button"
+        id="quickPanBtn"
+        class="menu-quick-btn quick-outline-btn"
+        data-action="vPanToggle"
+        aria-label="Pan view"
+        title="Pan view"
+        aria-pressed="false">
+        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+          <path d="M7.5 9V5.8a1.1 1.1 0 0 1 2.2 0V8"></path>
+          <path d="M9.7 8.2V4.7a1.1 1.1 0 0 1 2.2 0V8"></path>
+          <path d="M11.9 8.3V5.6a1.1 1.1 0 0 1 2.2 0V9"></path>
+          <path d="M7.5 9V7.6a1.1 1.1 0 0 0-2.2 0v4.3c0 .7.2 1.3.6 1.9l1.2 1.7c.4.5.9.8 1.5.8h3.5c1 0 1.9-.6 2.3-1.5l1-2.2c.2-.4.3-.8.3-1.2V9.9a1.1 1.1 0 0 0-2.2 0"></path>
+        </svg>
+      </button>
       <button
         type="button"
         id="quickSimBtn"
@@ -1024,6 +1102,12 @@ const selectedColor = '#e06000';
 const defaultColor = '#000000';
 const textFont = '14px sans-serif';
 const canvasScale = 2;
+const minViewScale = 0.5;
+const maxViewScale = 2.5;
+const viewScaleStep = 0.25;
+const viewPanMargin = 180;
+const viewDefaultBounds = { minX: -240, minY: -200, maxX: 240, maxY: 220 };
+const autoFitPadding = 50;
 const minCanvasWidth = 320 * canvasScale;
 const minCanvasHeight = 320 * canvasScale;
 const airPressure = 1; // bar absolute
@@ -1043,6 +1127,7 @@ let endPos = null;
 let running = false;
 let globalLang = null;
 let mousePosition = null;
+let mouseScreenPosition = null;
 let stepTime = null;
 let simulationActive = false;
 let activateValvesTouchingBody = true;
@@ -1050,6 +1135,8 @@ let renderTime = 0;
 let previewComponent = null;
 let simulationAudio = null;
 let simulationAudioState = new WeakMap();
+let viewScale = 1;
+let viewOffset = { x: 0, y: 0 };
 
 
 /*************************************************************************/
@@ -1122,7 +1209,12 @@ const translations = {
     statusMove: 'Move mode: click a component to pick it and click again to drop it.',
     statusOptions: 'Options mode: click a component to edit it.',
     statusFlip: 'Flip mode: click a component to flip it.',
+    statusPan: 'Pan mode: drag the canvas to move the view.',
     statusSimulation: 'Simulation running: stop it before editing the schematic.',
+    quickZoomIn: 'Zoom in',
+    quickZoomOut: 'Zoom out',
+    quickZoomFit: 'Auto fit',
+    quickPan: 'Pan view',
     quickSimPlay: 'Start simulation',
     quickSimStop: 'Stop simulation',
     simulateMenu: 'Simulate',
@@ -1199,7 +1291,12 @@ const translations = {
     statusMove: 'Modo mover: haz clic en un componente para cogerlo y otro clic para soltarlo.',
     statusOptions: 'Modo opciones: haz clic en un componente para editarlo.',
     statusFlip: 'Modo voltear: haz clic en un componente para voltearlo.',
+    statusPan: 'Modo mano: arrastra el lienzo para desplazar la vista.',
     statusSimulation: 'Simulación en marcha: deténla antes de editar el esquema.',
+    quickZoomIn: 'Acercar',
+    quickZoomOut: 'Alejar',
+    quickZoomFit: 'Autoajustar',
+    quickPan: 'Desplazar vista',
     quickSimPlay: 'Iniciar simulación',
     quickSimStop: 'Detener simulación',
     simulateMenu: 'Simular',
@@ -1272,11 +1369,266 @@ function currentStatusText() {
   if (drawMode === 'Move') return t('statusMove');
   if (drawMode === 'Options') return t('statusOptions');
   if (drawMode === 'Flip') return t('statusFlip');
+  if (drawMode === 'Pan') return t('statusPan');
   return t('statusReady');
 }
 
 function isSimulationRunning() {
   return simulationActive && animationID !== null;
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function viewportWidth() {
+  return canvas.width / canvasScale;
+}
+
+function viewportHeight() {
+  return canvas.height / canvasScale;
+}
+
+function visibleWorldWidth(scale = viewScale) {
+  return viewportWidth() / scale;
+}
+
+function visibleWorldHeight(scale = viewScale) {
+  return viewportHeight() / scale;
+}
+
+function createBounds(minX, minY, maxX, maxY) {
+  return { minX, minY, maxX, maxY };
+}
+
+function expandBounds(bounds, paddingX, paddingY = paddingX) {
+  return createBounds(
+    bounds.minX - paddingX,
+    bounds.minY - paddingY,
+    bounds.maxX + paddingX,
+    bounds.maxY + paddingY,
+  );
+}
+
+function mergeBounds(bounds, nextBounds) {
+  if (!nextBounds) {
+    return bounds;
+  }
+  if (!bounds) {
+    return { ...nextBounds };
+  }
+
+  return createBounds(
+    Math.min(bounds.minX, nextBounds.minX),
+    Math.min(bounds.minY, nextBounds.minY),
+    Math.max(bounds.maxX, nextBounds.maxX),
+    Math.max(bounds.maxY, nextBounds.maxY),
+  );
+}
+
+function componentBounds(component) {
+  if (!component) {
+    return null;
+  }
+
+  switch (component.type) {
+    case 'Text':
+      return createBounds(component.x - 5, component.y - 12,
+                          component.x + component.width + 5, component.y + 8);
+    case 'Pipe':
+      return createBounds(
+        Math.min(component.init.x, component.end.x) - 6,
+        Math.min(component.init.y, component.end.y) - 6,
+        Math.max(component.init.x, component.end.x) + 6,
+        Math.max(component.init.y, component.end.y) + 6,
+      );
+    case 'Manometer':
+      if (component.options.flipped) {
+        return createBounds(component.x - 18, component.y - 2,
+                            component.x + 18, component.y + 50);
+      }
+      return createBounds(component.x - 18, component.y - 50,
+                          component.x + 18, component.y + 2);
+    case 'Compressor':
+      return createBounds(component.x - 10, component.y - 2,
+                          component.x + 10, component.y + 26);
+    case 'Escape':
+      return createBounds(component.x - 8, component.y - 2,
+                          component.x + 8, component.y + 22);
+    case 'ValveNret':
+      return createBounds(component.x - 14, component.y - 52,
+                          component.x + 14, component.y + 2);
+    case 'ValveFlow':
+      return createBounds(component.x - 30, component.y - 52,
+                          component.x + 30, component.y + 2);
+    case 'ValveOr':
+    case 'ValveAnd':
+      return createBounds(component.x - 42, component.y - 2,
+                          component.x + 42, component.y + 48);
+    case 'Cylinder1':
+    case 'Cylinder2':
+      return createBounds(component.x - 8, component.y - 42,
+                          component.x + 150, component.y + 2);
+    case 'Valve22m': {
+      const shift = component.shift?.pos || 0;
+      return createBounds(component.x - 70 + shift, component.y - 52,
+                          component.x + 40 + shift, component.y + 2);
+    }
+    case 'Valve32b':
+    case 'Valve32m':
+    case 'Valve32r': {
+      const shift = component.shift?.pos || 0;
+      return createBounds(component.x - 82 + shift, component.y - 52,
+                          component.x + 52 + shift, component.y + 2);
+    }
+    case 'Roller':
+      return createBounds(component.x - 16, component.y - 40,
+                          component.x + 16, component.y + 2);
+    case 'Valve32p': {
+      const shift = component.shift?.pos || 0;
+      return createBounds(
+        Math.min(component.x - 70, component.x - 52 + shift),
+        component.y - 52,
+        Math.max(component.x + 90, component.x + 32 + shift),
+        component.y + 2,
+      );
+    }
+    case 'Valve42m': {
+      const shift = component.shift?.pos || 0;
+      return createBounds(component.x - 72 + shift, component.y - 52,
+                          component.x + 52 + shift, component.y + 2);
+    }
+    case 'Valve52m': {
+      const shift = component.shift?.pos || 0;
+      return createBounds(component.x - 112 + shift, component.y - 52,
+                          component.x + 52 + shift, component.y + 2);
+    }
+    case 'Valve52p': {
+      const shift = component.shift?.pos || 0;
+      return createBounds(
+        Math.min(component.x - 112, component.x - 92 + shift),
+        component.y - 52,
+        Math.max(component.x + 112, component.x + 32 + shift),
+        component.y + 2,
+      );
+    }
+    default:
+      return createBounds(component.x - 20, component.y - 20,
+                          component.x + 20, component.y + 20);
+  }
+}
+
+function schematicBounds() {
+  let bounds = null;
+  for (const component of engine.components) {
+    bounds = mergeBounds(bounds, componentBounds(component));
+  }
+
+  if (!bounds) {
+    bounds = { ...viewDefaultBounds };
+  }
+
+  return bounds;
+}
+
+function constrainViewOffset(offset, scale = viewScale) {
+  const bounds = expandBounds(schematicBounds(), viewPanMargin);
+  const viewWidth = visibleWorldWidth(scale);
+  const viewHeight = visibleWorldHeight(scale);
+  const startX = bounds.minX;
+  const endX = bounds.maxX - viewWidth;
+  const startY = bounds.minY;
+  const endY = bounds.maxY - viewHeight;
+
+  return {
+    x: clamp(offset.x, Math.min(startX, endX), Math.max(startX, endX)),
+    y: clamp(offset.y, Math.min(startY, endY), Math.max(startY, endY)),
+  };
+}
+
+function screenToWorld(position) {
+  return {
+    x: position.x / viewScale + viewOffset.x,
+    y: position.y / viewScale + viewOffset.y,
+  };
+}
+
+function zoomAnchorPosition() {
+  if (mouseScreenPosition) {
+    return mouseScreenPosition;
+  }
+
+  return {
+    x: viewportWidth() * 0.5,
+    y: viewportHeight() * 0.5,
+  };
+}
+
+function setViewScale(nextScale, anchor = zoomAnchorPosition()) {
+  const clampedScale = clamp(nextScale, minViewScale, maxViewScale);
+  if (Math.abs(clampedScale - viewScale) < 0.001) {
+    return false;
+  }
+
+  const anchorWorld = screenToWorld(anchor);
+  viewScale = clampedScale;
+  viewOffset = constrainViewOffset({
+    x: anchorWorld.x - anchor.x / viewScale,
+    y: anchorWorld.y - anchor.y / viewScale,
+  }, viewScale);
+
+  if (mouseScreenPosition) {
+    mousePosition = screenToWorld(mouseScreenPosition);
+  }
+
+  updateToolboxSelection();
+  updateQuickZoomButtons();
+  if (drawMode === 'component' && componentType !== 'Pipe' && mousePosition) {
+    updatePlacementPreview(mousePosition);
+  }
+  renderer.draw();
+  return true;
+}
+
+function zoomIn() {
+  return setViewScale(viewScale + viewScaleStep);
+}
+
+function zoomOut() {
+  return setViewScale(viewScale - viewScaleStep);
+}
+
+function zoomToFit() {
+  const bounds = schematicBounds();
+  const width = Math.max(bounds.maxX - bounds.minX, grid * 8);
+  const height = Math.max(bounds.maxY - bounds.minY, grid * 8);
+  const availableWidth = Math.max(viewportWidth() - autoFitPadding * 2, 120);
+  const availableHeight = Math.max(viewportHeight() - autoFitPadding * 2 - 28, 120);
+  const targetScale = clamp(
+    Math.min(availableWidth / width, availableHeight / height, maxViewScale),
+    minViewScale,
+    maxViewScale,
+  );
+  const targetOffset = {
+    x: bounds.minX - (visibleWorldWidth(targetScale) - width) * 0.5,
+    y: bounds.minY - (visibleWorldHeight(targetScale) - height) * 0.5,
+  };
+
+  viewScale = targetScale;
+  viewOffset = constrainViewOffset(targetOffset, viewScale);
+
+  if (mouseScreenPosition) {
+    mousePosition = screenToWorld(mouseScreenPosition);
+  }
+
+  if (drawMode === 'component' && componentType !== 'Pipe' && mousePosition) {
+    updatePlacementPreview(mousePosition);
+  }
+
+  updateToolboxSelection();
+  updateQuickZoomButtons();
+  renderer.draw();
+  return true;
 }
 
 function normalizeExampleFilename(filename = '') {
@@ -1362,6 +1714,7 @@ function updateToolboxSelection() {
     button.classList.toggle('active', active);
     button.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
+  updateQuickPanButton();
 }
 
 document.addEventListener("click", (e) => {
@@ -1411,6 +1764,17 @@ document.addEventListener("click", (e) => {
     eMove: () => { simulationStop(); drawMode='Move'; },
     eOptions: () => { simulationStop(); drawMode='Options'; },
     eFlip: () => { simulationStop(); drawMode='Flip'; },
+
+    vZoomIn: () => { zoomIn(); },
+    vZoomOut: () => { zoomOut(); },
+    vZoomFit: () => { zoomToFit(); },
+    vPanToggle: () => {
+      const enablePan = drawMode !== 'Pan';
+      ui._escape();
+      if (enablePan) {
+        drawMode = 'Pan';
+      }
+    },
 
     sInit: () => { simulationInit(); },
     sToggle: () => { simulationToggle(); },
@@ -4217,10 +4581,16 @@ class Renderer{
 
   draw() {
     const ctx = this.ctx;
+    const viewTransformScale = canvasScale * viewScale;
+    const viewTranslateX = -viewOffset.x * viewTransformScale;
+    const viewTranslateY = -viewOffset.y * viewTransformScale;
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.drawPosition(mousePosition);
+    ctx.setTransform(viewTransformScale, 0, 0, viewTransformScale,
+                     viewTranslateX, viewTranslateY);
 
     for (const comp of this.engine.components) {
       comp.draw(ctx);
@@ -4233,24 +4603,27 @@ class Renderer{
       ctx.restore();
     }
 
+    ctx.setTransform(canvasScale, 0, 0, canvasScale, 0, 0);
+    this.drawPosition(mousePosition);
     this.drawStatus();
   }
 
   drawPosition(position) {
     const ctx = this.ctx;
+    const viewportMidX = viewportWidth() * 0.5;
     if (this.engine.haveTeacherComp()) {
       ctx.fillStyle = '#fff';
     }
     else {
       ctx.fillStyle = '#afa';
     }
-    ctx.fillRect(this.canvas.width*0.5-76, 5, 76, 18);
+    ctx.fillRect(viewportMidX - 76, 5, 76, 18);
     if (position !== null) {
       ctx.textAlign = 'center';
       ctx.font = textFont;
       ctx.fillStyle = '#aaa';
       ctx.fillText(Math.round(position.x) + ',' + Math.round(position.y),
-                   this.canvas.width*0.5-38, 18);
+                   viewportMidX - 38, 18);
       ctx.textAlign = 'left';
     }
   }
@@ -4258,17 +4631,17 @@ class Renderer{
   drawStatus() {
     const ctx = this.ctx;
     const status = currentStatusText();
-    const viewportWidth = this.canvas.width / canvasScale;
-    const viewportHeight = this.canvas.height / canvasScale;
+    const width = viewportWidth();
+    const height = viewportHeight();
 
     ctx.save();
     ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
     ctx.strokeStyle = '#cbd6df';
     ctx.lineWidth = 1;
-    ctx.fillRect(0, viewportHeight - 28, viewportWidth, 28);
+    ctx.fillRect(0, height - 28, width, 28);
     ctx.beginPath();
-    ctx.moveTo(0, viewportHeight - 28);
-    ctx.lineTo(viewportWidth, viewportHeight - 28);
+    ctx.moveTo(0, height - 28);
+    ctx.lineTo(width, height - 28);
     ctx.stroke();
 
     ctx.font = textFont;
@@ -4276,9 +4649,9 @@ class Renderer{
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.beginPath();
-    ctx.rect(10, viewportHeight - 26, viewportWidth - 20, 22);
+    ctx.rect(10, height - 26, width - 20, 22);
     ctx.clip();
-    ctx.fillText(status, 10, viewportHeight - 14);
+    ctx.fillText(status, 10, height - 14);
     ctx.restore();
   }
 }
@@ -4343,6 +4716,7 @@ class UIController {
     this.grid = grid;
     this.dragThreshold = 4;
     this.dragState = null;
+    this.panState = null;
     this.positionMoveInit = {x:0, y:0};
     this.positionCompInit = {x:0, y:0};
 
@@ -4531,6 +4905,43 @@ class UIController {
     return true;
   }
 
+  _beginViewportPan(screenPosition) {
+    this.panState = {
+      startScreenPosition: { x: screenPosition.x, y: screenPosition.y },
+      originOffset: { x: viewOffset.x, y: viewOffset.y },
+    };
+    updateQuickPanButton();
+    this.renderer.draw();
+    return true;
+  }
+
+  _updateViewportPan(screenPosition) {
+    if (!this.panState) {
+      return false;
+    }
+
+    const deltaX = screenPosition.x - this.panState.startScreenPosition.x;
+    const deltaY = screenPosition.y - this.panState.startScreenPosition.y;
+
+    viewOffset = constrainViewOffset({
+      x: this.panState.originOffset.x - deltaX / viewScale,
+      y: this.panState.originOffset.y - deltaY / viewScale,
+    });
+    mousePosition = screenToWorld(screenPosition);
+    return true;
+  }
+
+  _endViewportPan() {
+    if (!this.panState) {
+      return false;
+    }
+
+    this.panState = null;
+    updateQuickPanButton();
+    this.renderer.draw();
+    return true;
+  }
+
   _escape() {
     drawMode = null;
     componentType = null;
@@ -4540,6 +4951,7 @@ class UIController {
       this.dragState.component.selected = false;
     }
     this.dragState = null;
+    this.panState = null;
     if (editPipe) {
       this.engine.deleteComponent(editPipe)
     }
@@ -4560,20 +4972,30 @@ class UIController {
     canvas.height = Math.round(height);
     canvas.style.width = this.canvas.width/canvasScale + 'px';
     canvas.style.height  = this.canvas.height/canvasScale + 'px';
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.scale(canvasScale, canvasScale);
+    viewOffset = constrainViewOffset(viewOffset);
+    ctx.setTransform(canvasScale, 0, 0, canvasScale, 0, 0);
     this.renderer.draw();
   }
 
   _getMousePos(e) {
     const r = this.canvas.getBoundingClientRect();
-    const position = {x:e.clientX - r.left, y:e.clientY - r.top};
-    mousePosition = position;
-    return position;
+    mouseScreenPosition = {
+      x: e.clientX - r.left,
+      y: e.clientY - r.top,
+    };
+    mousePosition = screenToWorld(mouseScreenPosition);
+    return mousePosition;
   }
 
   _onDown(e) {
     let position = this._getMousePos(e);
+
+    if (drawMode === 'Pan') {
+      closeComponentMenu();
+      if (this._beginViewportPan(mouseScreenPosition)) {
+        return;
+      }
+    }
 
     if ((drawMode === null) && (simulationActive !== true)) {
       const hit = this._findComponentAt(position);
@@ -4720,6 +5142,10 @@ class UIController {
     let position = this._getMousePos(e);
     let needsRedraw = false;
 
+    if (this._updateViewportPan(mouseScreenPosition)) {
+      needsRedraw = true;
+    }
+
     if (this._updateDirectDrag(position)) {
       needsRedraw = true;
     }
@@ -4758,6 +5184,7 @@ class UIController {
   }
 
   _onUp(e){
+    this._endViewportPan();
     this._endDirectDrag();
   }
 
@@ -4839,6 +5266,13 @@ function aboutWindowShow() {
 
 function resetEditor() {
    engine.reset();
+   viewScale = 1;
+   viewOffset = constrainViewOffset({ x: 0, y: 0 }, viewScale);
+   if (mouseScreenPosition) {
+     mousePosition = screenToWorld(mouseScreenPosition);
+   }
+   updateToolboxSelection();
+   updateQuickZoomButtons();
    renderer.draw();
 }
 
@@ -4899,7 +5333,7 @@ async function openSchema() {
     if (components) {
       engine.components = components;
       engine.createNodes();
-      renderer.draw();
+      zoomToFit();
     }
   };
   input.click();
@@ -4925,7 +5359,7 @@ async function openFile(filename) {
     if (components) {
       engine.components = components;
       engine.createNodes();
-      renderer.draw();
+      zoomToFit();
       return true;
     }
   } catch (error) {
@@ -5250,6 +5684,46 @@ function reportErrors(files, jsons) {
 
 
 /************************ SIMULATION AUDIO ************************/
+
+function updateQuickPanButton() {
+  if (!quickPanBtn) return;
+
+  const label = t('quickPan');
+  const isActive = drawMode === 'Pan';
+  const isDragging = isActive && typeof ui !== 'undefined' && ui && ui.panState;
+
+  quickPanBtn.title = label;
+  quickPanBtn.setAttribute('aria-label', label);
+  quickPanBtn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  quickPanBtn.disabled = false;
+  quickPanBtn.classList.toggle('active', isActive);
+
+  canvas.classList.toggle('is-pan-mode', isActive);
+  canvas.classList.toggle('is-pan-dragging', Boolean(isDragging));
+}
+
+function updateQuickFitButton() {
+  if (!quickFitBtn) return;
+
+  const label = t('quickZoomFit');
+  quickFitBtn.title = label;
+  quickFitBtn.setAttribute('aria-label', label);
+}
+
+function updateQuickZoomButtons() {
+  if (!quickZoomInBtn || !quickZoomOutBtn) return;
+
+  const zoomInLabel = t('quickZoomIn');
+  const zoomOutLabel = t('quickZoomOut');
+
+  quickZoomInBtn.title = zoomInLabel;
+  quickZoomInBtn.setAttribute('aria-label', zoomInLabel);
+  quickZoomOutBtn.title = zoomOutLabel;
+  quickZoomOutBtn.setAttribute('aria-label', zoomOutLabel);
+
+  quickZoomInBtn.disabled = viewScale >= maxViewScale - 0.001;
+  quickZoomOutBtn.disabled = viewScale <= minViewScale + 0.001;
+}
 
 function updateQuickSimulationButton() {
   if (!quickSimBtn) return;
@@ -5638,6 +6112,9 @@ function setLanguage(lang) {
       el.textContent = translation;
     }
   });
+  updateQuickFitButton();
+  updateQuickPanButton();
+  updateQuickZoomButtons();
   updateQuickSimulationButton();
 }
 
@@ -5672,6 +6149,10 @@ const componentMenuEditBtn = document.getElementById('componentMenuEditBtn');
 const componentMenuFlipBtn = document.getElementById('componentMenuFlipBtn');
 const componentMenuDeleteBtn = document.getElementById('componentMenuDeleteBtn');
 const componentMenuCloseBtn = document.getElementById('componentMenuCloseBtn');
+const quickZoomOutBtn = document.getElementById('quickZoomOutBtn');
+const quickZoomInBtn = document.getElementById('quickZoomInBtn');
+const quickFitBtn = document.getElementById('quickFitBtn');
+const quickPanBtn = document.getElementById('quickPanBtn');
 const quickSimBtn = document.getElementById('quickSimBtn');
 
 const engine = new Engine();
@@ -5706,6 +6187,9 @@ function firstSetupApp() {
   ui._resizeCanvas();
   navigatorLang();
   updateToolboxSelection();
+  updateQuickFitButton();
+  updateQuickPanButton();
+  updateQuickZoomButtons();
   updateQuickSimulationButton();
   document.addEventListener('pointerdown', unlockSimulationSound, { passive: true });
   document.addEventListener('keydown', unlockSimulationSound);

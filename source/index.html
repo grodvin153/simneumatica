@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
-  <meta name="keywords" content="Online Pneumatic Simulator Schematic Picuino Open-source">
+  <meta name="keywords" content="Online Pneumatic Simulator Schematic Open-source">
 
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <meta name="description" content="Interactive pneumatic circuit simulator designed for secondary school students and teachers. Build, test, and visualize pneumatic systems online. Free, accurate, and ready for classroom use. By Picuino.">
-  <title data-i18n="title">Pneumatic Simulator - Picuino</title>
+  <meta name="description" content="Interactive pneumatic circuit simulator designed for students and teachers. Build, test, and visualize pneumatic systems online.">
+  <title data-i18n="title">Simulador de Neumatica</title>
 
   <!-- Add your own local favicon files before publishing this on a new domain. -->
   <!-- Set the canonical URL when you decide the final public address. -->
@@ -945,15 +945,15 @@
 
   <dialog id="aboutWindow">
     <div>
-    <h2>Simulador Neumático Derivado de Picuino</h2>
+    <h2>Simulador de Neumática</h2>
     <p><strong>Versión modificada y adaptada por Gonzalo Rodríguez Vinuesa.</strong></p>
     <p><strong>Contacto:</strong> <a href="mailto:gonzalorv@gmail.com">gonzalorv@gmail.com</a></p>
     <p><strong>Autor de la obra original:</strong> Carlos Félix Pardo Martín.</p>
     <p><strong>Proyecto original:</strong>
-      <a href="https://www.picuino.com/neumatic/index.html" target="_blank" rel="noopener noreferrer">Picuino Pneumatic Simulator</a>.
+      <a href="https://www.picuino.com/neumatic/index.html" target="_blank" rel="noopener noreferrer">Web original del simulador</a>.
     </p>
     <p><strong>Código fuente original:</strong>
-      <a href="https://github.com/picuino/neumatic/" target="_blank" rel="noopener noreferrer">github.com/picuino/neumatic</a>.
+      <a href="https://github.com/picuino/neumatic/" target="_blank" rel="noopener noreferrer">Repositorio original del simulador</a>.
     </p>
     <p><strong>Tutoriales originales:</strong>
       <a href="https://www.picuino.com/en/mecan-neumatic-index.html" target="_blank" rel="noopener noreferrer">Pneumatics tutorial (en)</a>.
@@ -1057,7 +1057,7 @@ let simulationAudioState = new WeakMap();
 const translations = {
 
   en: {
-    title: 'Pneumatic Simulator - Picuino',
+    title: 'Pneumatic Simulator',
     closeConfirm: "Are you sure you want to leave this page?",
     aboutCloseBtn: 'Close Window',
     saveFileDialogTitle: 'Save file',
@@ -1134,7 +1134,7 @@ const translations = {
   },
 
   es: {
-    title: 'Simulador Neumático - Picuino',
+    title: 'Simulador de Neumática',
     closeConfirm: "¿Realmente desea salir de la página web?",
     aboutCloseBtn: 'Cerrar Ventana',
     saveFileDialogTitle: 'Guardar archivo',
@@ -4220,10 +4220,6 @@ class Renderer{
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    ctx.textAlign = "start";
-    ctx.font = textFont;
-    ctx.fillStyle = '#aaa';
-    ctx.fillText('Picuino Pneumatic Simulator v' + programVersion, 8, 18);
     this.drawPosition(mousePosition);
 
     for (const comp of this.engine.components) {
@@ -4833,7 +4829,7 @@ function swapScreen() {
 function aboutWindowShow() {
   const aboutWindow = document.getElementById('aboutWindow');
   const aboutWindowTitle = document.querySelector('#aboutWindow h2');
-  const aboutTitle = 'Simulador Neumático Derivado de Picuino v' + programVersion;
+  const aboutTitle = 'Simulador de Neumática v' + programVersion;
 
   console.log(aboutTitle);
   console.log('Original: Carlos Félix Pardo Martín. Modificaciones: Gonzalo Rodríguez Vinuesa.');
@@ -5077,7 +5073,7 @@ async function savePNG(filename = "image.png") {
 async function saveSchema(rol) {
   let schematic = [{
     type: 'Schematic',
-    program: 'Picuino Pneumatic Simulator',
+    program: 'Simulador de Neumática',
     version: programVersion,
   }];
   for (const comp of engine.components) {

@@ -884,9 +884,10 @@
       <path d="M17 23c5-7 9-7 14 0"></path>
       <path d="M18 28l12-10"></path>
       <path d="M27 18h5v5"></path>
-      <path d="M10 24v10h28V24"></path>
-      <polygon points="22,31 22,37 29,34" fill="currentColor"></polygon>
-      <path d="M31 30v8"></path>
+      <path d="M10 24v10h12"></path>
+      <path d="M32 34h6V24"></path>
+      <circle cx="24" cy="34" r="4"></circle>
+      <path d="M29 29l7 5l-7 5z"></path>
     </symbol>
     <symbol id="icon-valveor" viewBox="0 0 48 48">
       <circle cx="10" cy="16" r="2"></circle>
@@ -2959,6 +2960,8 @@ class ValveFlowOneWay extends ComponentBase {
       flipped: false,
     };
     this.freeConductance = conductanceBase;
+    this.minPressure = 0.02;
+    this.active = false;
     this.color = defaultColor;
   }
 
@@ -2979,6 +2982,7 @@ class ValveFlowOneWay extends ComponentBase {
   }
 
   reset() {
+    this.active = false;
     this.color = defaultColor;
   }
 
@@ -2990,8 +2994,12 @@ class ValveFlowOneWay extends ComponentBase {
     const [via1, via2] = this.vias();
     const node1 = engine.findNode(via1);
     const node2 = engine.findNode(via2);
-    const flowLeftToRight = node1.pressure >= node2.pressure;
+    const pressureDiff = node1.pressure - node2.pressure;
+    const flowLeftToRight = pressureDiff >= 0;
     const freeLeftToRight = !this.options.flipped;
+    const freePressure = freeLeftToRight ? pressureDiff : -pressureDiff;
+    this.active = freePressure > this.minPressure;
+
     const conductance = (flowLeftToRight === freeLeftToRight)
       ? this.freeConductance
       : this.options.conductance;
@@ -3032,30 +3040,35 @@ class ValveFlowOneWay extends ComponentBase {
     ctx.beginPath();
     ctx.moveTo(this.x-40, this.y);
     ctx.lineTo(this.x-40, this.y+28);
+    ctx.lineTo(this.x-9, this.y+28);
+    ctx.moveTo(this.x+18, this.y+28);
     ctx.lineTo(this.x+40, this.y+28);
     ctx.lineTo(this.x+40, this.y);
     ctx.stroke();
 
-    const triangle = this.options.flipped
-      ? [[this.x+8, this.y+23], [this.x+8, this.y+33], [this.x-3, this.y+28]]
-      : [[this.x-8, this.y+23], [this.x-8, this.y+33], [this.x+3, this.y+28]];
-    ctx.fillStyle = bodyColor;
+    const ballShift = this.active ? 4 : 0;
+    const ballX = this.options.flipped
+      ? this.x + 8 + ballShift
+      : this.x - 3 - ballShift;
+
+    ctx.strokeStyle = bodyColor;
     ctx.beginPath();
-    ctx.moveTo(triangle[0][0], triangle[0][1]);
-    ctx.lineTo(triangle[1][0], triangle[1][1]);
-    ctx.lineTo(triangle[2][0], triangle[2][1]);
-    ctx.closePath();
-    ctx.fill();
+    ctx.arc(ballX, this.y+28, 7, 0, Math.PI*2);
+    ctx.stroke();
 
     ctx.strokeStyle = bodyColor;
     ctx.beginPath();
     if (this.options.flipped) {
-      ctx.moveTo(this.x-7, this.y+21);
-      ctx.lineTo(this.x-7, this.y+35);
+      ctx.moveTo(this.x-15, this.y+21);
+      ctx.lineTo(this.x-15, this.y+35);
+      ctx.lineTo(this.x-2, this.y+28);
+      ctx.closePath();
     }
     else {
-      ctx.moveTo(this.x+7, this.y+21);
-      ctx.lineTo(this.x+7, this.y+35);
+      ctx.moveTo(this.x+15, this.y+21);
+      ctx.lineTo(this.x+15, this.y+35);
+      ctx.lineTo(this.x+2, this.y+28);
+      ctx.closePath();
     }
     ctx.stroke();
   }

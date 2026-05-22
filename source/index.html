@@ -1547,8 +1547,8 @@ function componentBounds(component) {
       return createBounds(component.x - 30, component.y - 52,
                           component.x + 30, component.y + 2);
     case 'ValveFlowOneWay':
-      return createBounds(component.x - 54, component.y - 20,
-                          component.x + 56, component.y + 50);
+      return createBounds(component.x - 44, component.y - 18,
+                          component.x + 44, component.y + 40);
     case 'ValveOr':
     case 'ValveAnd':
       return createBounds(component.x - 42, component.y - 2,
@@ -3009,7 +3009,7 @@ class ValveFlowOneWay extends ComponentBase {
   }
 
   near(pos) {
-    return this.nearRect(this.x-54, this.y-20, this.x+56, this.y+50, pos);
+    return this.nearRect(this.x-44, this.y-18, this.x+44, this.y+40, pos);
   }
 
   draw(ctx) {
@@ -3022,10 +3022,10 @@ class ValveFlowOneWay extends ComponentBase {
   drawBody(ctx) {
     const color = (this.selected) ? selectedColor : this.color;
     const bodyColor = (this.selected) ? selectedColor : defaultColor;
-    const svgOriginX = 99.417073;
-    const svgOriginY = 111.83502;
-    const svgScale = 80 / (146.22319 - 52.610956);
-    const ballShift = this.active ? 4.7 : 0;
+    const svgOriginX = 0.5 * (40.70736 + 161.2129);
+    const svgOriginY = 0.5 * (112.27589 + 111.83502);
+    const svgScale = 80 / (161.2129 - 40.70736);
+    const ballShift = this.active ? 8 : 0;
     const drawSvgPath = (pathData) => ctx.stroke(new Path2D(pathData));
 
     ctx.save();

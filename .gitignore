@@ -3,3 +3,4 @@ node_modules/
 docs/
 .firebase/
 npm-debug.log*
+firebase-debug.log

@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "simneumatica",
     "public": "docs",
     "ignore": [
       "firebase.json",

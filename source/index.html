@@ -551,6 +551,7 @@
             <ul class="submenu">
               <li><a href="#" data-action="cValveNret" data-i18n="cValveNret">Non-return valve</a></li>
               <li><a href="#" data-action="cValveFlow" data-i18n="cValveFlow">Choke valve</a></li>
+              <li><a href="#" data-action="cValveFlowOneWay" data-i18n="cValveFlowOneWay">One-way flow control valve</a></li>
               <li><a href="#" data-action="cValveOr"   data-i18n="cValveOr">Or valve</a></li>
               <li><a href="#" data-action="cValveAnd"  data-i18n="cValveAnd">And valve</a></li>
             </ul>
@@ -618,6 +619,7 @@
           <li><a href="#" data-action="eDelete" data-i18n="eDelete">Delete</a></li>
           <li><a href="#" data-action="eMove"   data-i18n="eMove">Move</a></li>
           <li><a href="#" data-action="eOptions" data-i18n="eOptions">Options</a></li>
+          <li><a href="#" data-action="eRotate" data-i18n="eRotate">Rotate</a></li>
           <li><a href="#" data-action="eFlip" data-i18n="eFlip">Flip</a></li>
         </ul>
       </li>
@@ -875,6 +877,17 @@
       <path d="M16 29l16-10"></path>
       <path d="M27 18h5v5"></path>
     </symbol>
+    <symbol id="icon-valveflow-oneway" viewBox="0 0 48 48">
+      <path d="M6 24h8"></path>
+      <path d="M34 24h8"></path>
+      <rect x="14" y="13" width="20" height="14"></rect>
+      <path d="M17 23c5-7 9-7 14 0"></path>
+      <path d="M18 28l12-10"></path>
+      <path d="M27 18h5v5"></path>
+      <path d="M10 24v10h28V24"></path>
+      <polygon points="22,31 22,37 29,34" fill="currentColor"></polygon>
+      <path d="M31 30v8"></path>
+    </symbol>
     <symbol id="icon-valveor" viewBox="0 0 48 48">
       <circle cx="10" cy="16" r="2"></circle>
       <circle cx="10" cy="32" r="2"></circle>
@@ -982,6 +995,10 @@
               <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valveflow"></use></svg></span>
               <span class="tool-label" data-i18n="cValveFlow">Choke valve</span>
             </button>
+            <button type="button" class="tool-btn" data-action="cValveFlowOneWay" data-component-type="ValveFlowOneWay" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valveflow-oneway"></use></svg></span>
+              <span class="tool-label" data-i18n="cValveFlowOneWay">One-way flow control valve</span>
+            </button>
             <button type="button" class="tool-btn" data-action="cValveOr" data-component-type="ValveOr" aria-pressed="false">
               <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valveor"></use></svg></span>
               <span class="tool-label" data-i18n="cValveOr">Or valve</span>
@@ -1029,6 +1046,7 @@
     <h3 id="componentMenuTitle" data-i18n="componentMenuTitle">Element Actions</h3>
     <div class="component-menu-actions">
       <button type="button" id="componentMenuEditBtn" data-i18n="eOptions">Options</button>
+      <button type="button" id="componentMenuRotateBtn" data-i18n="eRotate">Rotate</button>
       <button type="button" id="componentMenuFlipBtn" data-i18n="eFlip">Flip</button>
       <button type="button" id="componentMenuDeleteBtn" data-i18n="eDelete" data-variant="danger">Delete</button>
       <button type="button" id="componentMenuCloseBtn" data-i18n="componentMenuCloseBtn">Close</button>
@@ -1212,6 +1230,7 @@ const translations = {
     auxValvesMenu: 'Aux. valves',
     cValveNret: 'Non-return valve',
     cValveFlow: 'Choke valve',
+    cValveFlowOneWay: 'One-way flow control valve',
     cValveOr: 'OR valve',
     cValveAnd: 'AND valve',
     cylinderMenu: 'Cylinders',
@@ -1228,6 +1247,7 @@ const translations = {
     eDelete: 'Delete',
     eMove: 'Move',
     eOptions: 'Options',
+    eRotate: 'Rotate',
     eFlip: 'Flip',
     componentMenuTitle: 'Element Actions',
     componentMenuCloseBtn: 'Close',
@@ -1239,6 +1259,7 @@ const translations = {
     statusDelete: 'Delete mode: click a component to remove it.',
     statusMove: 'Move mode: click a component to pick it and click again to drop it.',
     statusOptions: 'Options mode: click a component to edit it.',
+    statusRotate: 'Rotate mode: click a component to turn it 90 degrees.',
     statusFlip: 'Flip mode: click a component to flip it.',
     statusPan: 'Pan mode: drag the canvas to move the view.',
     statusSimulation: 'Simulation running: stop it before editing the schematic.',
@@ -1296,6 +1317,7 @@ const translations = {
     auxValvesMenu: 'Válvulas aux.',
     cValveNret: 'Válvula antirretorno',
     cValveFlow: 'Válvula estranguladora',
+    cValveFlowOneWay: 'Regulador unidireccional',
     cValveOr: 'Válvula selectora (OR)',
     cValveAnd: 'Válvula simultaneidad (AND)',
     cylinderMenu: 'Cilindros',
@@ -1312,6 +1334,7 @@ const translations = {
     eDelete: 'Borrar',
     eMove: 'Mover',
     eOptions: 'Opciones',
+    eRotate: 'Girar',
     eFlip: 'Voltear',
     componentMenuTitle: 'Acciones del elemento',
     componentMenuCloseBtn: 'Cerrar',
@@ -1323,6 +1346,7 @@ const translations = {
     statusDelete: 'Modo borrar: haz clic en un componente para eliminarlo.',
     statusMove: 'Modo mover: haz clic en un componente para cogerlo y otro clic para soltarlo.',
     statusOptions: 'Modo opciones: haz clic en un componente para editarlo.',
+    statusRotate: 'Modo girar: haz clic en un componente para rotarlo 90 grados.',
     statusFlip: 'Modo voltear: haz clic en un componente para voltearlo.',
     statusPan: 'Modo mano: arrastra el lienzo para desplazar la vista.',
     statusSimulation: 'Simulación en marcha: deténla antes de editar el esquema.',
@@ -1362,6 +1386,7 @@ const componentTypeTranslationKeys = {
   Valve52p: 'cValve52p',
   ValveNret: 'cValveNret',
   ValveFlow: 'cValveFlow',
+  ValveFlowOneWay: 'cValveFlowOneWay',
   ValveOr: 'cValveOr',
   ValveAnd: 'cValveAnd',
 };
@@ -1403,6 +1428,7 @@ function currentStatusText() {
   if (drawMode === 'Delete') return t('statusDelete');
   if (drawMode === 'Move') return t('statusMove');
   if (drawMode === 'Options') return t('statusOptions');
+  if (drawMode === 'Rotate') return t('statusRotate');
   if (drawMode === 'Flip') return t('statusFlip');
   if (drawMode === 'Pan') return t('statusPan');
   return t('statusReady');
@@ -1466,6 +1492,23 @@ function componentBounds(component) {
     return null;
   }
 
+  if (component.rotationSteps && component.rotationSteps() !== 0 && component.type !== 'Pipe') {
+    const radiusByType = {
+      Cylinder1: 160,
+      Cylinder2: 160,
+      Valve52p: 130,
+      Valve52m: 110,
+      Valve32p: 110,
+      Valve42m: 90,
+      MaintenanceUnit: 80,
+      ValveFlowOneWay: 70,
+      AirTank: 60,
+    };
+    const radius = radiusByType[component.type] || 70;
+    return createBounds(component.x - radius, component.y - radius,
+                        component.x + radius, component.y + radius);
+  }
+
   switch (component.type) {
     case 'Text':
       return createBounds(component.x - 5, component.y - 12,
@@ -1502,6 +1545,9 @@ function componentBounds(component) {
     case 'ValveFlow':
       return createBounds(component.x - 30, component.y - 52,
                           component.x + 30, component.y + 2);
+    case 'ValveFlowOneWay':
+      return createBounds(component.x - 44, component.y - 20,
+                          component.x + 44, component.y + 34);
     case 'ValveOr':
     case 'ValveAnd':
       return createBounds(component.x - 42, component.y - 2,
@@ -1800,12 +1846,14 @@ document.addEventListener("click", (e) => {
     cValveAnd: () =>  { simulationStop(); drawMode='component'; componentType='ValveAnd'; },
     cValveNret: () => { simulationStop(); drawMode='component'; componentType='ValveNret'; },
     cValveFlow: () => { simulationStop(); drawMode='component'; componentType='ValveFlow'; },
+    cValveFlowOneWay: () => { simulationStop(); drawMode='component'; componentType='ValveFlowOneWay'; },
     cCylinder1: () => { simulationStop(); drawMode='component'; componentType='Cylinder1'; },
     cCylinder2: () => { simulationStop(); drawMode='component'; componentType='Cylinder2'; },
 
     eDelete: () => { simulationStop(); drawMode='Delete'; },
     eMove: () => { simulationStop(); drawMode='Move'; },
     eOptions: () => { simulationStop(); drawMode='Options'; },
+    eRotate: () => { simulationStop(); drawMode='Rotate'; },
     eFlip: () => { simulationStop(); drawMode='Flip'; },
 
     vZoomIn: () => { zoomIn(); },
@@ -1914,6 +1962,51 @@ class ComponentBase {
   }
 
   contributeVolume(engine) {
+  }
+
+  canRotate() {
+    return true;
+  }
+
+  rotationSteps() {
+    return ((Number(this.options.rotation) || 0) % 4 + 4) % 4;
+  }
+
+  rotate() {
+    this.options.rotation = (this.rotationSteps() + 1) % 4;
+  }
+
+  rotatePoint(pos, steps = this.rotationSteps()) {
+    const dx = pos.x - this.x;
+    const dy = pos.y - this.y;
+    switch (steps) {
+      case 1:
+        return {x: this.x - dy, y: this.y + dx};
+      case 2:
+        return {x: this.x - dx, y: this.y - dy};
+      case 3:
+        return {x: this.x + dy, y: this.y - dx};
+      default:
+        return {x: pos.x, y: pos.y};
+    }
+  }
+
+  toLocalPosition(pos) {
+    return this.rotatePoint(pos, (4 - this.rotationSteps()) % 4);
+  }
+
+  rotateVias(vias) {
+    return vias.map((via) => this.rotatePoint(via));
+  }
+
+  applyRotationTransform(ctx) {
+    const steps = this.rotationSteps();
+    if (steps === 0) {
+      return;
+    }
+    ctx.translate(this.x, this.y);
+    ctx.rotate(steps * Math.PI / 2);
+    ctx.translate(-this.x, -this.y);
   }
 
   drawPipe(ctx, color=defaultColor) {
@@ -2236,6 +2329,10 @@ class Pipe extends ComponentBase {
     return [via1, via2];
   }
 
+  canRotate() {
+    return false;
+  }
+
   reset() {
     this.color = defaultColor;
   }
@@ -2302,7 +2399,7 @@ class Manometer extends ComponentBase {
 
   vias() {
     const via1 = {x:this.x, y:this.y};
-    return [via1];
+    return this.rotateVias([via1]);
   }
 
   reset() {
@@ -2388,7 +2485,7 @@ class Compressor extends ComponentBase {
 
   vias() {
     const via1 = {x:this.x, y:this.y};
-    return [via1];
+    return this.rotateVias([via1]);
   }
 
   reset() {
@@ -2452,7 +2549,7 @@ class MaintenanceUnit extends ComponentBase {
     const outlet = this.options.flipped
       ? {x:this.x-60, y:this.y}
       : {x:this.x+60, y:this.y};
-    return [inlet, outlet];
+    return this.rotateVias([inlet, outlet]);
   }
 
   reset() {
@@ -2494,7 +2591,12 @@ class MaintenanceUnit extends ComponentBase {
   }
 
   draw(ctx) {
-    const [viaIn, viaOut] = this.vias();
+    const viaIn = this.options.flipped
+      ? {x:this.x+60, y:this.y}
+      : {x:this.x-60, y:this.y};
+    const viaOut = this.options.flipped
+      ? {x:this.x-60, y:this.y}
+      : {x:this.x+60, y:this.y};
     const leftColor = this.options.flipped ? this.color2 : this.color1;
     const rightColor = this.options.flipped ? this.color1 : this.color2;
     const bodyColor = (this.selected) ? selectedColor : defaultColor;
@@ -2561,7 +2663,7 @@ class AirTank extends ComponentBase {
   vias() {
     const via1 = {x:this.x-40, y:this.y};
     const via2 = {x:this.x+40, y:this.y};
-    return [via1, via2];
+    return this.rotateVias([via1, via2]);
   }
 
   reset() {
@@ -2653,7 +2755,7 @@ class ValveNret extends ComponentBase {
   vias() {
     const via1 = {x:this.x, y:this.y};
     const via2 = {x:this.x, y:this.y-50};
-    return [via1, via2];
+    return this.rotateVias([via1, via2]);
   }
 
   reset () {
@@ -2803,7 +2905,7 @@ class ValveFlow extends ComponentBase {
   vias() {
     const via1 = {x:this.x, y:this.y};
     const via2 = {x:this.x, y:this.y-50};
-    return [via1, via2];
+    return this.rotateVias([via1, via2]);
   }
 
   reset() {
@@ -2848,6 +2950,118 @@ class ValveFlow extends ComponentBase {
 }
 
 
+class ValveFlowOneWay extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'ValveFlowOneWay';
+    this.options = {
+      conductance: 100,
+      flipped: false,
+    };
+    this.freeConductance = conductanceBase;
+    this.color = defaultColor;
+  }
+
+  validateOptions() {
+    this.options.conductance = Number(this.options.conductance);
+    if (isNaN(this.options.conductance))
+      this.options.conductance = 100;
+    if (this.options.conductance > 1000)
+      this.options.conductance = 1000;
+    if (this.options.conductance < 10)
+      this.options.conductance = 10;
+  }
+
+  vias() {
+    const via1 = {x:this.x-40, y:this.y};
+    const via2 = {x:this.x+40, y:this.y};
+    return this.rotateVias([via1, via2]);
+  }
+
+  reset() {
+    this.color = defaultColor;
+  }
+
+  flip() {
+    this.options.flipped = !this.options.flipped;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    const flowLeftToRight = node1.pressure >= node2.pressure;
+    const freeLeftToRight = !this.options.flipped;
+    const conductance = (flowLeftToRight === freeLeftToRight)
+      ? this.freeConductance
+      : this.options.conductance;
+
+    this.computeFlow(node1, node2, conductance, dt);
+    this.color = this.colorPressure(0.5*(node1.pressure + node2.pressure));
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-38, this.y-18, this.x+38, this.y+34, pos);
+  }
+
+  draw(ctx) {
+    ctx.lineWidth = lineWidth;
+    this.drawPort(ctx, this.x-40, this.y, 10, 0, this.color);
+    this.drawPort(ctx, this.x+40, this.y, -10, 0, this.color);
+    this.drawBody(ctx);
+  }
+
+  drawBody(ctx) {
+    const color = (this.selected) ? selectedColor : this.color;
+    const bodyColor = (this.selected) ? selectedColor : defaultColor;
+
+    ctx.strokeStyle = bodyColor;
+    ctx.beginPath();
+    ctx.strokeRect(this.x-28, this.y-18, 56, 24);
+    ctx.stroke();
+
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(this.x-20, this.y-2);
+    ctx.bezierCurveTo(this.x-10, this.y-15, this.x+10, this.y-15, this.x+20, this.y-2);
+    ctx.stroke();
+
+    this.drawArrow(ctx, this.x-16, this.y+1, this.x+16, this.y-14, bodyColor);
+
+    ctx.strokeStyle = bodyColor;
+    ctx.beginPath();
+    ctx.moveTo(this.x-40, this.y);
+    ctx.lineTo(this.x-40, this.y+28);
+    ctx.lineTo(this.x+40, this.y+28);
+    ctx.lineTo(this.x+40, this.y);
+    ctx.stroke();
+
+    const triangle = this.options.flipped
+      ? [[this.x+8, this.y+23], [this.x+8, this.y+33], [this.x-3, this.y+28]]
+      : [[this.x-8, this.y+23], [this.x-8, this.y+33], [this.x+3, this.y+28]];
+    ctx.fillStyle = bodyColor;
+    ctx.beginPath();
+    ctx.moveTo(triangle[0][0], triangle[0][1]);
+    ctx.lineTo(triangle[1][0], triangle[1][1]);
+    ctx.lineTo(triangle[2][0], triangle[2][1]);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = bodyColor;
+    ctx.beginPath();
+    if (this.options.flipped) {
+      ctx.moveTo(this.x-7, this.y+21);
+      ctx.lineTo(this.x-7, this.y+35);
+    }
+    else {
+      ctx.moveTo(this.x+7, this.y+21);
+      ctx.lineTo(this.x+7, this.y+35);
+    }
+    ctx.stroke();
+  }
+}
+
+
 class ValveOr extends ComponentBase {
   constructor(pos) {
     super(pos);
@@ -2864,7 +3078,7 @@ class ValveOr extends ComponentBase {
     const in1 = {x:this.x-40, y:this.y+30};
     const in2 = {x:this.x+40, y:this.y+30};
     const out = {x:this.x, y:this.y};
-    return [in1, in2, out];
+    return this.rotateVias([in1, in2, out]);
   }
 
   reset () {
@@ -2957,7 +3171,7 @@ class ValveAnd extends ComponentBase {
     const in1 = {x:this.x-40, y:this.y+30};
     const in2 = {x:this.x+40, y:this.y+30};
     const out = {x:this.x, y:this.y};
-    return [in1, in2, out];
+    return this.rotateVias([in1, in2, out]);
   }
 
   reset () {
@@ -3068,7 +3282,7 @@ class Escape extends ComponentBase {
 
   vias() {
     const via1 = {x:this.x, y:this.y};
-    return [via1];
+    return this.rotateVias([via1]);
   }
 
 
@@ -3126,7 +3340,7 @@ class Cylinder1 extends ComponentBase {
 
   vias() {
     const via1 = {x:this.x, y:this.y};
-    return [via1];
+    return this.rotateVias([via1]);
   }
 
   validateOptions() {
@@ -3333,7 +3547,7 @@ class Cylinder2 extends ComponentBase {
   vias() {
     const via1 = {x:this.x, y:this.y};
     const via2 = {x:this.x+110, y:this.y};
-    return [via1, via2];
+    return this.rotateVias([via1, via2]);
   }
 
   validateOptions() {
@@ -3533,7 +3747,7 @@ class Valve22m extends ComponentBase {
   vias() {
     const via1 = {x:this.x, y:this.y};
     const via2 = {x:this.x, y:this.y-50};
-    return [via1, via2];
+    return this.rotateVias([via1, via2]);
   }
 
   reset () {
@@ -3663,7 +3877,7 @@ class Valve32b extends ComponentBase {
     const via1 = {x:this.x, y:this.y};
     const via2 = {x:this.x, y:this.y-50};
     const via3 = {x:this.x+20, y:this.y};
-    return [via1, via2, via3];
+    return this.rotateVias([via1, via2, via3]);
   }
 
   reset () {
@@ -3821,7 +4035,7 @@ class Valve32m extends ComponentBase {
     const via1 = {x:this.x, y:this.y};
     const via2 = {x:this.x, y:this.y-50};
     const via3 = {x:this.x+20, y:this.y};
-    return [via1, via2, via3];
+    return this.rotateVias([via1, via2, via3]);
   }
 
   reset () {
@@ -3975,7 +4189,7 @@ class Valve32r extends ComponentBase {
     const via1 = {x:this.x, y:this.y};
     const via2 = {x:this.x, y:this.y-50};
     const via3 = {x:this.x+20, y:this.y};
-    return [via1, via2, via3];
+    return this.rotateVias([via1, via2, via3]);
   }
 
   reset () {
@@ -4144,8 +4358,9 @@ class Roller extends ComponentBase {
   }
 
   nearCylinder(cyl) {
-    if (cyl.y-35 < this.y + 6 && cyl.y-15 > this.y + 6) {
-      if (cyl.x+cyl.shift+120 < this.x && cyl.x+cyl.shift+145 > this.x) {
+    const localPos = cyl.toLocalPosition({x:this.x, y:this.y});
+    if (cyl.y-35 < localPos.y + 6 && cyl.y-15 > localPos.y + 6) {
+      if (cyl.x+cyl.shift+120 < localPos.x && cyl.x+cyl.shift+145 > localPos.x) {
         return true;
       }
     }
@@ -4220,7 +4435,7 @@ class Valve32p extends ComponentBase {
     const via3 = {x:this.x+20, y:this.y};
     const via4 = {x:this.x-70, y:this.y-20};
     const via5 = {x:this.x+90, y:this.y-20};
-    return [via1, via2, via3, via4, via5];
+    return this.rotateVias([via1, via2, via3, via4, via5]);
   }
 
   reset () {
@@ -4370,7 +4585,7 @@ class Valve42m extends ComponentBase {
     const via2 = {x:this.x+20, y:this.y};
     const via3 = {x:this.x,    y:this.y-50};
     const via4 = {x:this.x+20, y:this.y-50};
-    return [via1, via2, via3, via4];
+    return this.rotateVias([via1, via2, via3, via4]);
   }
 
   reset () {
@@ -4491,7 +4706,7 @@ class Valve52m extends ComponentBase {
     const via3 = {x:this.x+20, y:this.y};
     const via4 = {x:this.x-20, y:this.y-50};
     const via5 = {x:this.x+20, y:this.y-50};
-    return [via1, via2, via3, via4, via5];
+    return this.rotateVias([via1, via2, via3, via4, via5]);
   }
 
   reset () {
@@ -4625,7 +4840,7 @@ class Valve52p extends ComponentBase {
     const via5 = {x:this.x+20, y:this.y-50};
     const via6 = {x:this.x-110, y:this.y-20};
     const via7 = {x:this.x+110, y:this.y-20};
-    return [via1, via2, via3, via4, via5, via6, via7];
+    return this.rotateVias([via1, via2, via3, via4, via5, via6, via7]);
   }
 
   reset () {
@@ -4854,12 +5069,16 @@ class Renderer{
                      viewTranslateX, viewTranslateY);
 
     for (const comp of this.engine.components) {
+      ctx.save();
+      comp.applyRotationTransform(ctx);
       comp.draw(ctx);
+      ctx.restore();
     }
 
     if (previewComponent) {
       ctx.save();
       ctx.globalAlpha = 0.70;
+      previewComponent.applyRotationTransform(ctx);
       previewComponent.draw(ctx);
       ctx.restore();
     }
@@ -4940,6 +5159,7 @@ function createComponentInstance(type, position) {
   if (type === 'Valve52p') return new Valve52p(position);
   if (type === 'ValveNret') return new ValveNret(position);
   if (type === 'ValveFlow') return new ValveFlow(position);
+  if (type === 'ValveFlowOneWay') return new ValveFlowOneWay(position);
   if (type === 'ValveOr') return new ValveOr(position);
   if (type === 'ValveAnd') return new ValveAnd(position);
   return null;
@@ -5007,9 +5227,10 @@ class UIController {
   _findComponentAt(position) {
     for (let i = this.engine.components.length - 1; i >= 0; i--) {
       const component = this.engine.components[i];
-      const near = component.near(position);
+      const localPosition = component.toLocalPosition(position);
+      const near = component.near(localPosition);
       if (near) {
-        return { component, near };
+        return { component, near, localPosition };
       }
     }
     return null;
@@ -5024,6 +5245,7 @@ class UIController {
     return [
       'Text',
       'ValveFlow',
+      'ValveFlowOneWay',
       'Compressor',
       'MaintenanceUnit',
       'AirTank',
@@ -5036,6 +5258,21 @@ class UIController {
 
   _canFlipComponent(component) {
     return typeof component.flip === 'function';
+  }
+
+  _canRotateComponent(component) {
+    return typeof component.rotate === 'function' && component.canRotate();
+  }
+
+  _rotateComponent(component) {
+    if (!this._canRotateComponent(component)) {
+      return false;
+    }
+
+    component.rotate();
+    this.engine.createNodes();
+    this.renderer.draw();
+    return true;
   }
 
   _flipComponent(component) {
@@ -5061,7 +5298,7 @@ class UIController {
       textPromptAssign('text', 'Text:');
       return true;
     }
-    if (component.type === 'ValveFlow') {
+    if (['ValveFlow', 'ValveFlowOneWay'].includes(component.type)) {
       textPromptAssign('conductance', 'Conductance (10-1000):');
       return true;
     }
@@ -5087,7 +5324,7 @@ class UIController {
   }
 
   _beginDirectDrag(hit, position) {
-    const { component, near } = hit;
+    const { component, near, localPosition } = hit;
     let mode = 'move';
     let origin = { x: component.x, y: component.y };
 
@@ -5111,7 +5348,7 @@ class UIController {
       startPosition: { x: position.x, y: position.y },
       origin,
       toggleValveOnClick: this._isManualValve(component) &&
-        component.nearPushButton(position),
+        component.nearPushButton(localPosition),
     };
   }
 
@@ -5279,7 +5516,7 @@ class UIController {
     // Activate manual valves
     for (const comp of this.engine.components) {
       if (['Valve32b', 'Valve32m', 'Valve22m', 'Valve42m', 'Valve52m'].includes(comp.type)
-          && comp.nearPushButton(position)) {
+          && comp.nearPushButton(comp.toLocalPosition(position))) {
         if (comp.active) comp.active = false;
         else comp.active = true;
       }
@@ -5287,39 +5524,35 @@ class UIController {
 
     // Edit Options component mode
     if (drawMode === 'Options') {
-      for (const comp of this.engine.components) {
-        if (comp.near(position)) {
-          if (this._openComponentEditor(comp)) {
-            break;
-          }
-        }
+      const hit = this._findComponentAt(position);
+      if (hit) {
+        this._openComponentEditor(hit.component);
       }
       this.renderer.draw();
     }
 
+    // Rotate component mode
+    if (drawMode === 'Rotate') {
+      const hit = this._findComponentAt(position);
+      if (hit) {
+        this._rotateComponent(hit.component);
+      }
+    }
+
     // Flip component mode
     if (drawMode === 'Flip') {
-      for (const comp of this.engine.components) {
-        if (comp.near(position)) {
-          if (this._flipComponent(comp)) {
-            break;
-          }
-        }
+      const hit = this._findComponentAt(position);
+      if (hit) {
+        this._flipComponent(hit.component);
       }
     }
 
 
     // Delete component mode
     if (drawMode === 'Delete') {
-      let deleteComp = null;
-      for (const comp of this.engine.components) {
-        if (comp.near(position)) {
-          deleteComp = comp;
-          break;
-        }
-      }
-      if (deleteComp) {
-        this.engine.deleteComponent(deleteComp);
+      const hit = this._findComponentAt(position);
+      if (hit) {
+        this.engine.deleteComponent(hit.component);
       }
       this.renderer.draw();
     }
@@ -5386,19 +5619,16 @@ class UIController {
         pipeMove = null;
       }
       else {
-        for (const comp of this.engine.components) {
-          const near = comp.near(position);
-          if (near) {
-            componentMove = comp;
-            this.positionMoveInit.x = position.x;
-            this.positionMoveInit.y = position.y;
-            this.positionCompInit.x = comp.x;
-            this.positionCompInit.y = comp.y;
-            componentMove.selected = true;
-            if (componentMove.type === 'Pipe') {
-              pipeMove = near;
-            }
-            break;
+        const hit = this._findComponentAt(position);
+        if (hit) {
+          componentMove = hit.component;
+          this.positionMoveInit.x = position.x;
+          this.positionMoveInit.y = position.y;
+          this.positionCompInit.x = hit.component.x;
+          this.positionCompInit.y = hit.component.y;
+          componentMove.selected = true;
+          if (componentMove.type === 'Pipe') {
+            pipeMove = hit.near;
           }
         }
       }
@@ -5575,6 +5805,7 @@ function loadSchema(schematicJSON) {
     if (comp.type === 'Valve52m')        newcomp = new Valve52m({x:comp.x, y:comp.y});
     if (comp.type === 'Valve52p')        newcomp = new Valve52p({x:comp.x, y:comp.y});
     if (comp.type === 'ValveFlow')       newcomp = new ValveFlow({x:comp.x, y:comp.y});
+    if (comp.type === 'ValveFlowOneWay') newcomp = new ValveFlowOneWay({x:comp.x, y:comp.y});
     if (comp.type === 'ValveOr')         newcomp = new ValveOr({x:comp.x, y:comp.y});
     if (comp.type === 'ValveAnd')        newcomp = new ValveAnd({x:comp.x, y:comp.y});
     if (comp.type === 'Text')            newcomp = new Text({x:comp.x, y:comp.y});
@@ -6417,6 +6648,7 @@ const textInput = document.getElementById('textInput');
 const messageInput = document.getElementById('messageInput');
 const componentMenu = document.getElementById('componentMenu');
 const componentMenuEditBtn = document.getElementById('componentMenuEditBtn');
+const componentMenuRotateBtn = document.getElementById('componentMenuRotateBtn');
 const componentMenuFlipBtn = document.getElementById('componentMenuFlipBtn');
 const componentMenuDeleteBtn = document.getElementById('componentMenuDeleteBtn');
 const componentMenuCloseBtn = document.getElementById('componentMenuCloseBtn');
@@ -6445,6 +6677,7 @@ function closeComponentMenu() {
 function showComponentMenu(component) {
   componentMenuTarget = component;
   componentMenuEditBtn.hidden = !ui._canEditComponent(component);
+  componentMenuRotateBtn.hidden = !ui._canRotateComponent(component);
   componentMenuFlipBtn.hidden = !ui._canFlipComponent(component);
   componentMenuDeleteBtn.hidden = false;
 
@@ -6501,6 +6734,13 @@ componentMenuEditBtn.onclick = () => {
   const component = componentMenuTarget;
   closeComponentMenu();
   ui._openComponentEditor(component);
+};
+
+componentMenuRotateBtn.onclick = () => {
+  if (!componentMenuTarget) return;
+  const component = componentMenuTarget;
+  ui._rotateComponent(component);
+  closeComponentMenu();
 };
 
 componentMenuFlipBtn.onclick = () => {

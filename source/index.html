@@ -877,17 +877,17 @@
       <path d="M16 29l16-10"></path>
       <path d="M27 18h5v5"></path>
     </symbol>
-    <symbol id="icon-valveflow-oneway" viewBox="38 88 126 82">
-      <ellipse cx="107.41154" cy="158.19183" rx="6.2026749" ry="6.0656815"></ellipse>
-      <rect x="70.539833" y="92.436562" width="57.901443" height="35.41687"></rect>
-      <path d="M 40.70736,112.27589 161.2129,111.83502"></path>
-      <path d="m 52.610956,111.83502 0.440872,47.02655 h -0.440872 l 48.496134,1e-5"></path>
-      <path d="m 106.83845,149.75018 13.66709,8.52356 -12.78534,7.93573"></path>
-      <path d="m 120.06467,158.12678 26.15852,0.14696 v -46.43872"></path>
-      <path d="M 91.260902,124.91428 109.04282,95.963558 102.42971,101.401"></path>
-      <path d="m 109.01361,95.826643 -1.14646,8.366567"></path>
-      <path d="m 78.181644,101.25405 c 0,0 3.655476,3.81397 5.9472,5.03787 2.315721,1.23671 4.991714,1.68419 7.572934,2.16307 2.175931,0.40369 4.401304,0.51328 6.613109,0.58783 2.301553,0.0776 4.618943,0.11358 6.907023,-0.14696 2.57909,-0.29368 5.20723,-0.6403 7.62343,-1.58895 1.87043,-0.73438 3.70927,-1.72531 5.16192,-3.1137 0.89378,-0.85424 2.05741,-3.08612 2.05741,-3.08612"></path>
-      <path d="m 78.475559,122.85687 c 0,0 2.664504,-3.27871 4.408738,-4.40874 1.860382,-1.20528 4.066813,-1.81716 6.213534,-2.36971 1.663216,-0.42811 3.388981,-0.59672 5.102232,-0.71641 2.589946,-0.18094 5.199951,-0.19632 7.788777,0 2.91524,0.22107 5.84463,0.57307 8.67052,1.32262 1.97847,0.52478 4.04728,1.04092 5.73136,2.20437 1.51286,1.04516 3.67395,4.11483 3.67395,4.11483"></path>
+    <symbol id="icon-valveflow-oneway" viewBox="0 0 48 48">
+      <path d="M6 20h36"></path>
+      <rect x="15" y="10" width="18" height="16"></rect>
+      <path d="M18 18c4-6 8-6 12 0"></path>
+      <path d="M18 24c4-5 8-5 12 0"></path>
+      <path d="M20 24l8-12"></path>
+      <path d="M25 12h5v5"></path>
+      <path d="M10 20v16h11"></path>
+      <path d="M29 36h9V20"></path>
+      <circle cx="23" cy="36" r="5"></circle>
+      <path d="M29 29v14l9-7z"></path>
     </symbol>
     <symbol id="icon-valveor" viewBox="0 0 48 48">
       <circle cx="10" cy="16" r="2"></circle>
@@ -3022,47 +3022,59 @@ class ValveFlowOneWay extends ComponentBase {
   drawBody(ctx) {
     const color = (this.selected) ? selectedColor : this.color;
     const bodyColor = (this.selected) ? selectedColor : defaultColor;
-    const svgOriginX = 0.5 * (40.70736 + 161.2129);
-    const svgOriginY = 0.5 * (112.27589 + 111.83502);
-    const svgScale = 80 / (161.2129 - 40.70736);
-    const ballShift = this.active ? 8 : 0;
-    const drawSvgPath = (pathData) => ctx.stroke(new Path2D(pathData));
 
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.scale(svgScale, svgScale);
-    ctx.translate(-svgOriginX, -svgOriginY);
-    ctx.lineWidth = lineWidth / svgScale;
-    ctx.lineJoin = 'miter';
+    ctx.lineWidth = lineWidth;
     ctx.strokeStyle = bodyColor;
 
-    ctx.strokeRect(70.539833, 92.436562, 57.901443, 35.41687);
-    drawSvgPath('M 40.70736,112.27589 161.2129,111.83502');
-    drawSvgPath('M 91.260902,124.91428 109.04282,95.963558 102.42971,101.401');
-    drawSvgPath('m 109.01361,95.826643 -1.14646,8.366567');
-    drawSvgPath('m 78.181644,101.25405 c 0,0 3.655476,3.81397 5.9472,5.03787 2.315721,1.23671 4.991714,1.68419 7.572934,2.16307 2.175931,0.40369 4.401304,0.51328 6.613109,0.58783 2.301553,0.0776 4.618943,0.11358 6.907023,-0.14696 2.57909,-0.29368 5.20723,-0.6403 7.62343,-1.58895 1.87043,-0.73438 3.70927,-1.72531 5.16192,-3.1137 0.89378,-0.85424 2.05741,-3.08612 2.05741,-3.08612');
-    drawSvgPath('m 78.475559,122.85687 c 0,0 2.664504,-3.27871 4.408738,-4.40874 1.860382,-1.20528 4.066813,-1.81716 6.213534,-2.36971 1.663216,-0.42811 3.388981,-0.59672 5.102232,-0.71641 2.589946,-0.18094 5.199951,-0.19632 7.788777,0 2.91524,0.22107 5.84463,0.57307 8.67052,1.32262 1.97847,0.52478 4.04728,1.04092 5.73136,2.20437 1.51286,1.04516 3.67395,4.11483 3.67395,4.11483');
+    ctx.beginPath();
+    ctx.strokeRect(this.x-27, this.y-18, 54, 34);
+    ctx.stroke();
 
     ctx.strokeStyle = color;
     ctx.beginPath();
-    ctx.moveTo(40.70736, 112.27589);
-    ctx.lineTo(161.2129, 111.83502);
+    ctx.moveTo(this.x-40, this.y);
+    ctx.lineTo(this.x+40, this.y);
     ctx.stroke();
 
     ctx.strokeStyle = bodyColor;
-    ctx.save();
-    if (this.options.flipped) {
-      ctx.translate(2 * svgOriginX, 0);
-      ctx.scale(-1, 1);
-    }
-    drawSvgPath('m 52.610956,111.83502 0.440872,47.02655 h -0.440872 l 48.496134,1e-5');
-    drawSvgPath('m 106.83845,149.75018 13.66709,8.52356 -12.78534,7.93573');
-    drawSvgPath('m 120.06467,158.12678 26.15852,0.14696 v -46.43872');
+    ctx.beginPath();
+    ctx.moveTo(this.x-20, this.y-7);
+    ctx.bezierCurveTo(this.x-10, this.y-17, this.x+10, this.y-17, this.x+20, this.y-7);
+    ctx.stroke();
 
     ctx.beginPath();
-    ctx.ellipse(107.41154 - ballShift, 158.19183, 6.2026749, 6.0656815, 0, 0, Math.PI*2);
+    ctx.moveTo(this.x-20, this.y+12);
+    ctx.bezierCurveTo(this.x-10, this.y+2, this.x+10, this.y+2, this.x+20, this.y+12);
     ctx.stroke();
-    ctx.restore();
+
+    this.drawArrow(ctx, this.x-13, this.y+13, this.x+11, this.y-16, bodyColor);
+
+    ctx.beginPath();
+    ctx.moveTo(this.x-40, this.y);
+    ctx.lineTo(this.x-40, this.y+34);
+    ctx.lineTo(this.x-10, this.y+34);
+    ctx.moveTo(this.x+18, this.y+34);
+    ctx.lineTo(this.x+40, this.y+34);
+    ctx.lineTo(this.x+40, this.y);
+    ctx.stroke();
+
+    const ballShift = this.active ? 6 : 0;
+    const ballX = this.x - 4 - ballShift;
+    ctx.save();
+    if (this.options.flipped) {
+      ctx.translate(2 * this.x, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.beginPath();
+    ctx.arc(ballX, this.y+34, 7, 0, Math.PI*2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(this.x+14, this.y+24);
+    ctx.lineTo(this.x+14, this.y+44);
+    ctx.lineTo(this.x+28, this.y+34);
+    ctx.closePath();
+    ctx.stroke();
     ctx.restore();
   }
 }

@@ -3001,6 +3001,7 @@ class ValveFlow extends ComponentBase {
 }
 
 
+
 class ValveFlowOneWay extends ComponentBase {
   constructor(pos) {
     super(pos);
@@ -3118,95 +3119,6 @@ class ValveFlowOneWay extends ComponentBase {
 }
 
 
-class ValveOr extends ComponentBase {
-  constructor(pos) {
-    super(pos);
-    this.type = 'ValveOr';
-    this.shift = 14;
-    this.maxShift = 28;
-    this.conductance = conductanceBase;
-    this.color1 = defaultColor;
-    this.color2 = defaultColor;
-    this.color3 = defaultColor;
-  }
-
-  vias() {
-    const in1 = {x:this.x-40, y:this.y+30};
-    const in2 = {x:this.x+40, y:this.y+30};
-    const out = {x:this.x, y:this.y};
-    return this.rotateVias([in1, in2, out]);
-  }
-
-  reset () {
-    this.shift = this.maxShift*0.5;
-    this.color1 = defaultColor;
-    this.color2 = defaultColor;
-    this.color3 = defaultColor;
-  }
-
-  update(ctx, engine, dt) {
-    const [via1, via2, via3] = this.vias();
-    const node1 = engine.findNode(via1);
-    const node2 = engine.findNode(via2);
-    const node3 = engine.findNode(via3);
-
-    if (this.shift !== this.maxShift) {
-      this.computeFlow(node2, node3, this.conductance, dt);
-    }
-    if (this.shift !== 0) {
-      this.computeFlow(node1, node3, this.conductance, dt);
-    }
-
-    if (this.shift !== this.maxShift && node1.pressure > node2.pressure + 0.1) {
-      this.shift = this.maxShift;
-    }
-    if (this.shift !== 0 && node2.pressure > node1.pressure + 0.1) {
-      this.shift = 0;
-    }
-    this.color1 = this.colorPressure(node1.pressure);
-    this.color2 = this.colorPressure(node2.pressure);
-    this.color3 = this.colorPressure(node3.pressure);
-  }
-
-  near(pos) {
-    return this.nearRect(this.x-30, this.y+15, this.x+30, this.y+45, pos);
-  }
-
-  draw(ctx) {
-    this.drawPort(ctx, this.x-40, this.y+30, 12, 0, this.color1);
-    this.drawPort(ctx, this.x+40, this.y+30, -12, 0, this.color2);
-    this.drawPort(ctx, this.x, this.y, 0, 17, this.color3);
-    this.drawValveOr(ctx);
-    this.drawMovement(ctx);
-  }
-
-  drawValveOr(ctx) {
-    ctx.strokeStyle = (this.selected) ? selectedColor : this.color1;
-    ctx.beginPath();
-    ctx.moveTo(this.x-18, this.y+20);
-    ctx.lineTo(this.x-28, this.y+30);
-    ctx.lineTo(this.x-18, this.y+40);
-    ctx.stroke();
-
-    ctx.strokeStyle = (this.selected) ? selectedColor : this.color2;
-    ctx.beginPath();
-    ctx.moveTo(this.x+18, this.y+20);
-    ctx.lineTo(this.x+28, this.y+30);
-    ctx.lineTo(this.x+18, this.y+40);
-    ctx.stroke();
-
-    this.drawRectangle(ctx, this.x-30, this.y+17, this.x+30, this.y+43);
-  }
-
-  drawMovement(ctx) {
-    const posX = this.x + this.shift;
-    ctx.strokeStyle = (this.selected) ? selectedColor : defaultColor;
-    ctx.beginPath();
-    ctx.arc(posX-14,this.y+30, 8, 0, Math.PI*2);
-    ctx.stroke();
-  }
-}
-
 
 class ValveAnd extends ComponentBase {
   constructor(pos) {
@@ -3223,12 +3135,7 @@ class ValveAnd extends ComponentBase {
     this.color3w = '#fff';
   }
 
-  vias() {
-    const in1 = {x:this.x-40, y:this.y+30};
-    const in2 = {x:this.x+40, y:this.y+30};
-    const out = {x:this.x, y:this.y};
-    return this.rotateVias([in1, in2, out]);
-  }
+
 
   reset () {
     this.shift = maxShift * 0.5;
@@ -3919,8 +3826,6 @@ class Valve32b extends ComponentBase {
     };
     this.conductance = conductanceBase;
     this.active = false;
-    this.timeActive = 0;
-    this.maxTimeActive = 200;
     this.color1 = defaultColor;
     this.color2 = defaultColor;
     this.color3 = defaultColor;
@@ -3953,17 +3858,6 @@ class Valve32b extends ComponentBase {
     const node1 = engine.findNode(via1);
     const node2 = engine.findNode(via2);
     const node3 = engine.findNode(via3);
-
-
-    if (this.shift.pos === this.shift.max) {
-      this.timeActive += dt*1000;
-      if (this.timeActive > this.maxTimeActive) {
-        this.active = false;
-      }
-    }
-    if (this.shift.pos === this.shift.min) {
-      this.timeActive = 0;
-    }
 
     if (this.options.flipped) {
       if (this.shift.pos === this.shift.min) {
@@ -4065,7 +3959,6 @@ class Valve32b extends ComponentBase {
     this.drawPushButton(ctx, posX-50, this.y-20);
   }
 }
-
 
 class Valve32m extends ComponentBase {
   constructor(pos) {
@@ -5800,7 +5693,7 @@ _onDown(e) {
     // A. Intentar conmutar válvulas (Toggle)
     for (let i = this.engine.components.length - 1; i >= 0; i--) {
       const comp = this.engine.components[i];
-      if (['Valve22m', 'Valve32m', 'Valve52m'].includes(comp.type)) {
+      if (['Valve22m', 'Valve32m', 'Valve42m', 'Valve52m'].includes(comp.type)) {
         if (comp.nearPushButton(comp.toLocalPosition(position))) {
           comp.active = !comp.active;
           this.renderer.draw();

@@ -541,6 +541,7 @@
               <li><a href="#" data-action="cRoller"   data-i18n="cRoller">Roller of valve</a></li>
               <li><a href="#" data-action="cValve32p" data-i18n="cValve32p">Valve 3/2 pneu. pilot</a></li>
               <li><a href="#" data-action="cValve42m" data-i18n="cValve42m">Valve 4/2 manual</a></li>
+              <li><a href="#" data-action="cValve42ps" data-i18n="cValve42ps">Valve 4/2 pneu. spring return</a></li>
               <li><a href="#" data-action="cValve52m" data-i18n="cValve52m">Valve 5/2 manual</a></li>
               <li><a href="#" data-action="cValve52p" data-i18n="cValve52p">Valve 5/2 pneu. pilot</a></li>
             </ul>
@@ -840,6 +841,31 @@
       <path d="M14 24h5"></path>
       <path d="M25 24h5"></path>
     </symbol>
+    <symbol id="icon-valve42p" viewBox="0 0 48 48">
+      <rect x="10" y="16" width="12" height="16"></rect>
+      <rect x="22" y="16" width="12" height="16"></rect>
+      <path d="M14 16v-5"></path>
+      <path d="M14 32v5"></path>
+      <path d="M30 16v-5"></path>
+      <path d="M30 32v5"></path>
+      <polygon points="10,20 4,16 4,24" fill="currentColor"></polygon>
+      <path d="M34 24h1l2-3 2 6 2-6 2 3h1"></path>
+      <path d="M14 24h5"></path>
+      <path d="M25 24h5"></path>
+    </symbol>
+    <symbol id="icon-valve42ps" viewBox="0 0 48 48">
+      <rect x="10" y="16" width="12" height="16"></rect>
+      <rect x="22" y="16" width="12" height="16"></rect>
+      <path d="M14 16v-5"></path>
+      <path d="M14 32v5"></path>
+      <path d="M30 16v-5"></path>
+      <path d="M30 32v5"></path>
+      <path d="M6 24h4"></path>
+      <polygon points="14,20 8,16 8,24" fill="currentColor"></polygon>
+      <path d="M34 24h1l2-3 2 6 2-6 2 3h1"></path>
+      <path d="M14 24h5"></path>
+      <path d="M25 24h5"></path>
+    </symbol>
     <symbol id="icon-valve52m" viewBox="0 0 48 48">
       <rect x="10" y="16" width="12" height="16"></rect>
       <rect x="22" y="16" width="12" height="16"></rect>
@@ -973,6 +999,10 @@
             <button type="button" class="tool-btn" data-action="cValve42m" data-component-type="Valve42m" aria-pressed="false">
               <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valve42m"></use></svg></span>
               <span class="tool-label" data-i18n="cValve42m">Valve 4/2 manual</span>
+            </button>
+            <button type="button" class="tool-btn" data-action="cValve42ps" data-component-type="Valve42ps" aria-pressed="false">
+              <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valve42ps"></use></svg></span>
+              <span class="tool-label" data-i18n="cValve42ps">Valve 4/2 pneu. spring return</span>
             </button>
             <button type="button" class="tool-btn" data-action="cValve52m" data-component-type="Valve52m" aria-pressed="false">
               <span class="tool-icon"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-valve52m"></use></svg></span>
@@ -1178,7 +1208,7 @@ let mousePosition = null;
 let mouseScreenPosition = null;
 let stepTime = null;
 let simulationActive = false;
-let activateValvesTouchingBody = true;
+let activateValvesTouchingBody = false;
 let renderTime = 0;
 let previewComponent = null;
 let simulationAudio = null;
@@ -1226,6 +1256,8 @@ const translations = {
     cValve32p: 'Valve 3/2 pneu. pilot',
     cRoller: 'Roller of valve',
     cValve42m: 'Valve 4/2 manual',
+    cValve42p: 'Valve 4/2 pneu. + spring',
+    cValve42ps: 'Valve 4/2 pneu. spring return',
     cValve52m: 'Valve 5/2 manual',
     cValve52p: 'Valve 5/2 pneu. pilot',
     auxValvesMenu: 'Aux. valves',
@@ -1313,6 +1345,8 @@ const translations = {
     cRoller: 'Rodillo de válvula',
     cValve32p: 'Válvula 3/2 pilotada neum.',
     cValve42m: 'Válvula 4/2 manual',
+    cValve42p: 'Válvula 4/2 pilotada + muelle',
+    cValve42ps: 'Válvula 4/2 pilotada neum. retorno muelle',
     cValve52m: 'Válvula 5/2 manual',
     cValve52p: 'Válvula 5/2 pilotada neum.',
     auxValvesMenu: 'Válvulas aux.',
@@ -1383,6 +1417,8 @@ const componentTypeTranslationKeys = {
   Roller: 'cRoller',
   Valve32p: 'cValve32p',
   Valve42m: 'cValve42m',
+  Valve42p: 'cValve42p',
+  Valve42ps: 'cValve42ps',
   Valve52m: 'cValve52m',
   Valve52p: 'cValve52p',
   ValveNret: 'cValveNret',
@@ -1500,6 +1536,8 @@ function componentBounds(component) {
       Valve52p: 130,
       Valve52m: 110,
       Valve32p: 110,
+      Valve42p: 110,
+      Valve42ps: 110,
       Valve42m: 90,
       MaintenanceUnit: 80,
       ValveFlowOneWay: 70,
@@ -1585,6 +1623,16 @@ function componentBounds(component) {
       const shift = component.shift?.pos || 0;
       return createBounds(component.x - 72 + shift, component.y - 52,
                           component.x + 52 + shift, component.y + 2);
+    }
+    case 'Valve42p':
+    case 'Valve42ps': {
+      const shift = component.shift?.pos || 0;
+      return createBounds(
+        Math.min(component.x - 70, component.x - 52 + shift),
+        component.y - 52,
+        component.x + 52 + shift,
+        component.y + 2,
+      );
     }
     case 'Valve52m': {
       const shift = component.shift?.pos || 0;
@@ -1841,6 +1889,8 @@ document.addEventListener("click", (e) => {
     cRoller: () =>    { simulationStop(); drawMode='component'; componentType='Roller'; },
     cValve32p: () =>  { simulationStop(); drawMode='component'; componentType='Valve32p'; },
     cValve42m: () =>  { simulationStop(); drawMode='component'; componentType='Valve42m'; },
+    cValve42p: () =>  { simulationStop(); drawMode='component'; componentType='Valve42p'; },
+    cValve42ps: () => { simulationStop(); drawMode='component'; componentType='Valve42ps'; },
     cValve52m: () =>  { simulationStop(); drawMode='component'; componentType='Valve52m'; },
     cValve52p: () =>  { simulationStop(); drawMode='component'; componentType='Valve52p'; },
     cValveOr: () =>   { simulationStop(); drawMode='component'; componentType='ValveOr'; },
@@ -4687,6 +4737,184 @@ class Valve42m extends ComponentBase {
 }
 
 
+class Valve42p extends ComponentBase {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Valve42p';
+    this.shift = {
+      min: 0,
+      max: 40,
+      pos: 0,
+      speed: 350,
+    };
+    this.conductance = conductanceBase;
+    this.active = false;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.color4 = defaultColor;
+    this.color5 = defaultColor;
+  }
+
+  vias() {
+    const via1 = {x:this.x,    y:this.y};
+    const via2 = {x:this.x+20, y:this.y};
+    const via3 = {x:this.x,    y:this.y-50};
+    const via4 = {x:this.x+20, y:this.y-50};
+    const via5 = {x:this.x-70, y:this.y-20};
+    return this.rotateVias([via1, via2, via3, via4, via5]);
+  }
+
+  reset () {
+    this.shift.pos = this.shift.min;
+    this.active = false;
+    this.color1 = defaultColor;
+    this.color2 = defaultColor;
+    this.color3 = defaultColor;
+    this.color4 = defaultColor;
+    this.color5 = defaultColor;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2, via3, via4, via5] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    const node3 = engine.findNode(via3);
+    const node4 = engine.findNode(via4);
+    const node5 = engine.findNode(via5);
+
+    this.active = node5.pressure > airPressure + 0.1;
+
+    if (this.shift.pos === this.shift.min) {
+      this.computeFlow(node1, node4, this.conductance, dt);
+      this.computeFlow(node2, node3, this.conductance, dt);
+    }
+    if (this.shift.pos === this.shift.max) {
+      this.computeFlow(node1, node3, this.conductance, dt);
+      this.computeFlow(node2, node4, this.conductance, dt);
+    }
+
+    if (this.active) {
+       if (this.shift.pos < this.shift.max)
+         this.shift.pos += dt * this.shift.speed;
+       if (this.shift.pos > this.shift.max)
+         this.shift.pos = this.shift.max;
+    }
+    else {
+       if (this.shift.pos > this.shift.min)
+         this.shift.pos -= dt * this.shift.speed;
+       if (this.shift.pos < this.shift.min)
+         this.shift.pos = this.shift.min;
+    }
+
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+    this.color3 = this.colorPressure(node3.pressure);
+    this.color4 = this.colorPressure(node4.pressure);
+    this.color5 = this.colorPressure(node5.pressure);
+  }
+
+  near(pos) {
+    return this.nearRect(this.x-50 + this.shift.pos, this.y-40,
+                         this.x+30 + this.shift.pos, this.y-10, pos);
+  }
+
+  draw(ctx) {
+    this.drawPort(ctx, this.x,    this.y,    0, -10, this.color1);
+    this.drawPort(ctx, this.x+20, this.y,    0, -10, this.color2);
+    this.drawPort(ctx, this.x,    this.y-50, 0,  10, this.color3);
+    this.drawPort(ctx, this.x+20, this.y-50, 0,  10, this.color4);
+    this.drawPort(ctx, this.x-70, this.y-20, 5,   0, this.color5);
+    this.drawBody(ctx, this.shift.pos);
+  }
+
+  drawBody(ctx, shift) {
+    let posX = this.x + shift;
+
+    if (shift === this.shift.min) {
+      this.drawArrow(ctx, posX, this.y-10, posX+20, this.y-40+lineWidth, this.color1);
+      this.drawArrow(ctx, posX, this.y-40, posX+20, this.y-10-lineWidth, this.color3);
+      posX -= 40;
+      this.drawArrow(ctx, posX,    this.y-10, posX,    this.y-40+lineWidth);
+      this.drawArrow(ctx, posX+20, this.y-40, posX+20, this.y-10-lineWidth);
+      posX += 40;
+    }
+    else {
+      this.drawArrow(ctx, posX, this.y-10, posX+20, this.y-40+lineWidth);
+      this.drawArrow(ctx, posX, this.y-40, posX+20, this.y-10-lineWidth);
+      posX -= 40;
+      this.drawArrow(ctx, posX,    this.y-10, posX,    this.y-40+lineWidth, this.color1);
+      this.drawArrow(ctx, posX+20, this.y-40, posX+20, this.y-10-lineWidth, this.color4);
+      posX += 40;
+    }
+
+    this.drawRectangle(ctx, posX-10, this.y-40, posX+30, this.y-10);
+    this.drawSpring(ctx, posX+30, this.y-20);
+    posX -= 40;
+    this.drawPneuLeftPilot(ctx, posX+20, -65, this.color5);
+    this.drawRectangle(ctx, posX-10, this.y-40, posX+30, this.y-10);
+  }
+}
+
+
+class Valve42ps extends Valve42p {
+  constructor(pos) {
+    super(pos);
+    this.type = 'Valve42ps';
+    this.pilotVentRate = 80;
+  }
+
+  update(ctx, engine, dt) {
+    const [via1, via2, via3, via4, via5] = this.vias();
+    const node1 = engine.findNode(via1);
+    const node2 = engine.findNode(via2);
+    const node3 = engine.findNode(via3);
+    const node4 = engine.findNode(via4);
+    const node5 = engine.findNode(via5);
+
+    const ambientMass = airPressure * node5.volume;
+    if (node5.mass > ambientMass) {
+      const vent = Math.min(
+        node5.mass - ambientMass,
+        (node5.mass - ambientMass) * this.pilotVentRate * dt,
+      );
+      node5.mass -= vent;
+      node5.pressure = node5.mass / node5.volume;
+    }
+
+    this.active = node5.pressure > airPressure + 0.1;
+
+    if (this.shift.pos === this.shift.min) {
+      this.computeFlow(node1, node4, this.conductance, dt);
+      this.computeFlow(node2, node3, this.conductance, dt);
+    }
+    if (this.shift.pos === this.shift.max) {
+      this.computeFlow(node1, node3, this.conductance, dt);
+      this.computeFlow(node2, node4, this.conductance, dt);
+    }
+
+    if (this.active) {
+       if (this.shift.pos < this.shift.max)
+         this.shift.pos += dt * this.shift.speed;
+       if (this.shift.pos > this.shift.max)
+         this.shift.pos = this.shift.max;
+    }
+    else {
+       if (this.shift.pos > this.shift.min)
+         this.shift.pos -= dt * this.shift.speed;
+       if (this.shift.pos < this.shift.min)
+         this.shift.pos = this.shift.min;
+    }
+
+    this.color1 = this.colorPressure(node1.pressure);
+    this.color2 = this.colorPressure(node2.pressure);
+    this.color3 = this.colorPressure(node3.pressure);
+    this.color4 = this.colorPressure(node4.pressure);
+    this.color5 = this.colorPressure(node5.pressure);
+  }
+}
+
+
 class Valve52m extends ComponentBase {
   constructor(pos) {
     super(pos);
@@ -5161,6 +5389,8 @@ function createComponentInstance(type, position) {
   if (type === 'Valve32r') return new Valve32r(position);
   if (type === 'Roller') return new Roller(position);
   if (type === 'Valve42m') return new Valve42m(position);
+  if (type === 'Valve42p') return new Valve42p(position);
+  if (type === 'Valve42ps') return new Valve42ps(position);
   if (type === 'Valve52m') return new Valve52m(position);
   if (type === 'Valve52p') return new Valve52p(position);
   if (type === 'ValveNret') return new ValveNret(position);
@@ -5206,6 +5436,7 @@ class UIController {
     this.dragThreshold = 4;
     this.dragState = null;
     this.panState = null;
+    this.heldManualValve = null;
     this.positionMoveInit = {x:0, y:0};
     this.positionCompInit = {x:0, y:0};
 
@@ -5213,6 +5444,7 @@ class UIController {
     this.canvas.addEventListener('dblclick', e => this._onDoubleClick(e));
     window.addEventListener('mousemove', e => this._onMove(e));
     window.addEventListener('mouseup', e => this._onUp(e));
+    window.addEventListener('blur', () => this._releaseManualValvePress());
     window.addEventListener("resize", e => this._resizeCanvas());
     document.addEventListener("keydown", event => {
       if (event.key === "Escape") { this._escape(); }
@@ -5245,6 +5477,35 @@ class UIController {
   _isManualValve(component) {
     return ['Valve32b', 'Valve32m', 'Valve22m', 'Valve42m', 'Valve52m']
       .includes(component.type);
+  }
+
+  _beginManualValvePress(position) {
+    for (let i = this.engine.components.length - 1; i >= 0; i--) {
+      const component = this.engine.components[i];
+      if (!this._isManualValve(component)) {
+        continue;
+      }
+
+      if (component.nearPushButton(component.toLocalPosition(position))) {
+        this._releaseManualValvePress();
+        this.heldManualValve = component;
+        component.active = true;
+        this.renderer.draw();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  _releaseManualValvePress() {
+    if (!this.heldManualValve) {
+      return false;
+    }
+
+    this.heldManualValve.active = false;
+    this.heldManualValve = null;
+    this.renderer.draw();
+    return true;
   }
 
   _canEditComponent(component) {
@@ -5353,8 +5614,6 @@ class UIController {
       moved: false,
       startPosition: { x: position.x, y: position.y },
       origin,
-      toggleValveOnClick: this._isManualValve(component) &&
-        component.nearPushButton(localPosition),
     };
   }
 
@@ -5402,14 +5661,11 @@ class UIController {
       return false;
     }
 
-    const { component, moved, toggleValveOnClick } = this.dragState;
+    const { component, moved } = this.dragState;
 
     if (moved) {
       component.selected = false;
       this.engine.createNodes();
-    }
-    else if (toggleValveOnClick) {
-      component.active = !component.active;
     }
 
     this.dragState = null;
@@ -5462,6 +5718,7 @@ class UIController {
     if (this.dragState) {
       this.dragState.component.selected = false;
     }
+    this._releaseManualValvePress();
     this.dragState = null;
     this.panState = null;
     if (editPipe) {
@@ -5509,6 +5766,11 @@ class UIController {
       }
     }
 
+    if (drawMode === null && this._beginManualValvePress(position)) {
+      closeComponentMenu();
+      return;
+    }
+
     if ((drawMode === null) && (simulationActive !== true)) {
       const hit = this._findComponentAt(position);
       if (hit) {
@@ -5516,15 +5778,6 @@ class UIController {
         this._beginDirectDrag(hit, position);
         this.renderer.drawPosition(position);
         return;
-      }
-    }
-
-    // Activate manual valves
-    for (const comp of this.engine.components) {
-      if (['Valve32b', 'Valve32m', 'Valve22m', 'Valve42m', 'Valve52m'].includes(comp.type)
-          && comp.nearPushButton(comp.toLocalPosition(position))) {
-        if (comp.active) comp.active = false;
-        else comp.active = true;
       }
     }
 
@@ -5691,6 +5944,7 @@ class UIController {
   _onUp(e){
     this._endViewportPan();
     this._endDirectDrag();
+    this._releaseManualValvePress();
   }
 
   _onDoubleClick(e) {
@@ -5782,70 +6036,107 @@ function resetEditor() {
 }
 
 function loadSchema(schematicJSON) {
-  if (!schematicJSON) return;
-  const data = JSON.parse(schematicJSON);
+  if (!schematicJSON) return null;
+  let data;
+  try {
+    data = JSON.parse(schematicJSON);
+  }
+  catch (error) {
+    console.error('Invalid schematic JSON:', error);
+    return null;
+  }
+
+  if (!Array.isArray(data) || data.length < 2) {
+    console.error('Invalid schematic format.');
+    return null;
+  }
+
   const header = data.slice(0, 1)[0];
   const schematic = data.slice(1, -1);
   const footer = data.slice(-1)[0];
   const hashData = cyrb53(JSON.stringify(data.slice(0, -1)));
-  if (footer.hash !== hashData) {
-     console.log('Corrupted file!');
-     return;
+  if (!footer || footer.hash !== hashData) {
+     console.error('Corrupted file!');
+     return null;
   }
 
   let components = [];
+  const unsupportedTypes = [];
   for (const comp of schematic) {
-    newcomp = null;
-    if (comp.type === 'Compressor')      newcomp = new Compressor({x:comp.x, y:comp.y});
-    if (comp.type === 'MaintenanceUnit') newcomp = new MaintenanceUnit({x:comp.x, y:comp.y});
-    if (comp.type === 'AirTank')         newcomp = new AirTank({x:comp.x, y:comp.y});
-    if (comp.type === 'Manometer')       newcomp = new Manometer({x:comp.x, y:comp.y});
-    if (comp.type === 'Escape')          newcomp = new Escape({x:comp.x, y:comp.y});
-    if (comp.type === 'Cylinder1')       newcomp = new Cylinder1({x:comp.x, y:comp.y});
-    if (comp.type === 'Cylinder2')       newcomp = new Cylinder2({x:comp.x, y:comp.y});
-    if (comp.type === 'Valve22m')        newcomp = new Valve22m({x:comp.x, y:comp.y});
-    if (comp.type === 'Valve32b')        newcomp = new Valve32b({x:comp.x, y:comp.y});
-    if (comp.type === 'Valve32m')        newcomp = new Valve32m({x:comp.x, y:comp.y});
-    if (comp.type === 'Valve32p')        newcomp = new Valve32p({x:comp.x, y:comp.y});
-    if (comp.type === 'Valve42m')        newcomp = new Valve42m({x:comp.x, y:comp.y});
-    if (comp.type === 'Valve52m')        newcomp = new Valve52m({x:comp.x, y:comp.y});
-    if (comp.type === 'Valve52p')        newcomp = new Valve52p({x:comp.x, y:comp.y});
-    if (comp.type === 'ValveFlow')       newcomp = new ValveFlow({x:comp.x, y:comp.y});
-    if (comp.type === 'ValveFlowOneWay') newcomp = new ValveFlowOneWay({x:comp.x, y:comp.y});
-    if (comp.type === 'ValveOr')         newcomp = new ValveOr({x:comp.x, y:comp.y});
-    if (comp.type === 'ValveAnd')        newcomp = new ValveAnd({x:comp.x, y:comp.y});
-    if (comp.type === 'Text')            newcomp = new Text({x:comp.x, y:comp.y});
-    if (comp.type === 'Valve32r')        newcomp = new Valve32r({x:comp.x, y:comp.y});
-    if (comp.type === 'Roller')          newcomp = new Roller({x:comp.x, y:comp.y});
-    if (comp.type === 'ValveNret')       newcomp = new ValveNret({x:comp.x, y:comp.y});
-    if (comp.type === 'Pipe')       newcomp = new Pipe(comp.init, comp.end);
+    let newcomp = null;
+    if (comp.type === 'Pipe') {
+      newcomp = new Pipe(comp.init, comp.end);
+    }
+    else {
+      newcomp = createComponentInstance(comp.type, {x:comp.x, y:comp.y});
+    }
     if (newcomp) {
       Object.assign(newcomp.options, comp.options);
       newcomp.validateOptions();
       newcomp.timestamp = comp.stamp;
       components.push(newcomp);
     }
+    else {
+      unsupportedTypes.push(comp.type);
+    }
+  }
+
+  if (unsupportedTypes.length > 0) {
+    console.warn('Unsupported component types:', [...new Set(unsupportedTypes)].join(', '));
   }
   return components;
 }
 
 
 async function openSchema() {
-  let schematic = null;
   const input = document.createElement('input');
   input.type = 'file';
-  input.onchange = async (e) => {
-    const file = e.target.files[0];
-    const schematic = await file.text();
-    components = loadSchema(schematic);
-    if (components) {
-      engine.components = components;
-      engine.createNodes();
-      zoomToFit();
+  input.accept = '.txt,text/plain,application/json';
+  input.style.position = 'fixed';
+  input.style.left = '-9999px';
+  input.style.top = '-9999px';
+
+  const cleanupInput = () => {
+    if (input.parentElement) {
+      input.parentElement.removeChild(input);
     }
   };
+
+  input.onchange = async (e) => {
+    try {
+      const file = e.target.files && e.target.files[0];
+      if (!file) {
+        cleanupInput();
+        return;
+      }
+      const schematic = await file.text();
+      const loadedComponents = loadSchema(schematic);
+      if (!loadedComponents) {
+        cleanupInput();
+        window.alert('No se pudo abrir el fichero. Comprueba que sea un esquema válido de SimNeumática.');
+        return;
+      }
+      simulationStop();
+      closeComponentMenu();
+      drawMode = null;
+      clearPlacementPreview();
+      engine.components = loadedComponents;
+      engine.createNodes();
+      zoomToFit();
+      renderer.draw();
+      updateToolboxSelection();
+      cleanupInput();
+    }
+    catch (error) {
+      console.error('Could not open schematic:', error);
+      cleanupInput();
+      window.alert('No se pudo abrir el fichero. Comprueba que sea un esquema válido de SimNeumática.');
+    }
+  };
+
+  input.oncancel = cleanupInput;
+  document.body.appendChild(input);
   input.click();
-  engine.createNodes();
 }
 
 
@@ -5863,9 +6154,9 @@ async function openFile(filename) {
       }
       schematic = await answer.text();
     }
-    components = loadSchema(schematic);
-    if (components) {
-      engine.components = components;
+    const loadedComponents = loadSchema(schematic);
+    if (loadedComponents) {
+      engine.components = loadedComponents;
       engine.createNodes();
       zoomToFit();
       return true;
@@ -6289,7 +6580,7 @@ async function ensureSimulationSound() {
 }
 
 function isAudibleValveType(type) {
-  return ['Valve22m', 'Valve32b', 'Valve32m', 'Valve32r', 'Valve32p', 'Valve42m', 'Valve52m', 'Valve52p'].includes(type);
+  return ['Valve22m', 'Valve32b', 'Valve32m', 'Valve32r', 'Valve32p', 'Valve42m', 'Valve42p', 'Valve42ps', 'Valve52m', 'Valve52p'].includes(type);
 }
 
 function captureSimulationAudioComponentState(comp) {

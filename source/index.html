@@ -5756,145 +5756,74 @@ class UIController {
     return mousePosition;
   }
 
-  _onDown(e) {
-    let position = this._getMousePos(e);
 
-    if (drawMode === 'Pan') {
-      closeComponentMenu();
-      if (this._beginViewportPan(mouseScreenPosition)) {
-        return;
+_onDown(e) {
+  let position = this._getMousePos(e);
+
+  // 1. PRIORIDAD: Colocación de componentes (si hay modo dibujo)
+  if (drawMode === 'component') {
+    if (componentType !== 'Pipe') {
+      const comp = createComponentInstance(componentType, position);
+      if (comp) {
+        this.engine.addComponent(comp);
       }
-    }
-
-    if (drawMode === null && this._beginManualValvePress(position)) {
-      closeComponentMenu();
+      drawMode = null;
+      componentType = null;
+      clearPlacementPreview();
+      updateToolboxSelection();
+      this.renderer.draw();
+      return;
+    } else if (componentType === 'Pipe') {
+       // ... (tu lógica original de tuberías)
+       // Asegúrate de que termine en return para no procesar el resto
+       if (initPos === null) {
+        initPos = position;
+        editPipe = new Pipe(initPos, initPos);
+        editPipe.color = selectedColor;
+        this.engine.addComponent(editPipe);
+      } else {
+        editPipe.moveEnd(position);
+        editPipe.color = '#000';
+        if (editPipe.init.x === editPipe.end.x && editPipe.init.y === editPipe.end.y) {
+          this.engine.deleteComponent(editPipe);
+        }
+        editPipe = null;
+        initPos = null;
+      }
+      this.renderer.draw();
       return;
     }
+  }
 
-    if ((drawMode === null) && (simulationActive !== true)) {
-      const hit = this._findComponentAt(position);
-      if (hit) {
-        closeComponentMenu();
-        this._beginDirectDrag(hit, position);
-        this.renderer.drawPosition(position);
-        return;
-      }
-    }
-
-    // Edit Options component mode
-    if (drawMode === 'Options') {
-      const hit = this._findComponentAt(position);
-      if (hit) {
-        this._openComponentEditor(hit.component);
-      }
-      this.renderer.draw();
-    }
-
-    // Rotate component mode
-    if (drawMode === 'Rotate') {
-      const hit = this._findComponentAt(position);
-      if (hit) {
-        this._rotateComponent(hit.component);
-      }
-    }
-
-    // Flip component mode
-    if (drawMode === 'Flip') {
-      const hit = this._findComponentAt(position);
-      if (hit) {
-        this._flipComponent(hit.component);
-      }
-    }
-
-
-    // Delete component mode
-    if (drawMode === 'Delete') {
-      const hit = this._findComponentAt(position);
-      if (hit) {
-        this.engine.deleteComponent(hit.component);
-      }
-      this.renderer.draw();
-    }
-
-
-    // Draw component mode
-    if (drawMode === 'component') {
-      let comp = createComponentInstance(componentType, position);
-
-      // Draw Text
-      if (componentType === 'Text') {
-        componentEdit = comp;
-        textPromptAssign('text', 'Text:');
-      }
-      if (['Valve32r', 'Roller'].includes(componentType)) {
-        componentEdit = comp;
-        textPromptAssign('reference', 'Reference:');
-      }
-
-      // Draw pipe
-      if (componentType === 'Pipe') {
-        if (initPos === null) {
-          initPos = position;
-          editPipe = new Pipe(initPos, initPos);
-          comp = editPipe;
-          editPipe.color = selectedColor;
-        }
-        else {
-          editPipe.moveEnd(position);
-          editPipe.color = '#000';
-          if (editPipe.init.x === editPipe.end.x &&
-              editPipe.init.y === editPipe.end.y) {
-            this.engine.deleteComponent(editPipe);
-          }
-          editPipe = null;
-          initPos = null;
+  // 2. MODO INTERACCIÓN (Solo si no estamos colocando nada y simulación activa)
+  if (drawMode === null && simulationActive === true) {
+    // A. Intentar conmutar válvulas (Toggle)
+    for (let i = this.engine.components.length - 1; i >= 0; i--) {
+      const comp = this.engine.components[i];
+      if (['Valve22m', 'Valve32m', 'Valve52m'].includes(comp.type)) {
+        if (comp.nearPushButton(comp.toLocalPosition(position))) {
+          comp.active = !comp.active;
+          this.renderer.draw();
+          return; // Salimos: clic consumido por el toggle
         }
       }
-
-      // Add component and redraw
-      if (comp !== null) {
-        this.engine.addComponent(comp);
-        updatePlacementPreview(position);
-      }
-      this.renderer.draw();
     }
 
-    // Move component mode
-    if (drawMode === 'Move') {
-      if (componentMove !== null) {
-        componentMove.selected = false;
-        if (pipeMove === 'init')
-          componentMove.moveInit(position);
-        else if (pipeMove === 'end')
-          componentMove.moveEnd(position);
-        else {
-          const x = position.x - this.positionMoveInit.x + this.positionCompInit.x;
-          const y = position.y - this.positionMoveInit.y + this.positionCompInit.y;
-          componentMove.move(x, y);
-          this.positionMoveInit = {x:0, y:0};
-          this.positionCompInit = {x:0, y:0};
-        }
-        componentMove = null;
-        pipeMove = null;
-      }
-      else {
-        const hit = this._findComponentAt(position);
-        if (hit) {
-          componentMove = hit.component;
-          this.positionMoveInit.x = position.x;
-          this.positionMoveInit.y = position.y;
-          this.positionCompInit.x = hit.component.x;
-          this.positionCompInit.y = hit.component.y;
-          componentMove.selected = true;
-          if (componentMove.type === 'Pipe') {
-            pipeMove = hit.near;
-          }
-        }
-      }
-      this.renderer.draw();
+    // B. Intentar activar pulsador (Momentáneo)
+    // Usamos tu función original que ya maneja el "hold" (mantener presionado)
+    if (this._beginManualValvePress(position)) {
+      return; // Salimos: clic consumido por el pulsador
     }
+  }
+
+  // 3. RESTO (Arrastrar componentes, mover, etc.)
+  const hit = this._findComponentAt(position);
+  if (hit) {
+    closeComponentMenu();
+    this._beginDirectDrag(hit, position);
     this.renderer.drawPosition(position);
   }
+}
 
   _onMove(e){
     let position = this._getMousePos(e);
